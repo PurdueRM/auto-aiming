@@ -129,6 +129,24 @@ void OpenCVArmorDetectorNode::imageCallback(
   cv::Mat frame = cv_bridge::toCvShare(image_msg, "bgr8")->image;
   cv::resize(frame, frame, cv::Size(WIDTH, HEIGHT));
 
+  // Save a frame every 5 seconds for possible future use
+  if (last_saved_frame_time.nanoseconds() == 0 || (this->now() - last_saved_frame_time).seconds() >= 5.0) {
+    last_saved_frame_time = this->now();
+    const char* home_dir = std::getenv("HOME");
+    if (home_dir != nullptr) {
+      std::string folder_path = std::string(home_dir) + "/savedFrames";
+
+      std::string mkdir_cmd = "mkdir -p " + folder_path;
+      int ret = system(mkdir_cmd.c_str());
+      (void) ret;
+
+      std::string filename = folder_path + "/frame_" + std::to_string(image_msg->header.stamp.sec) + ".jpg";
+      cv::imwrite(filename, frame);
+      RCLCPP_INFO(this->get_logger(), "Saved frame to: %s", filename.c_str());
+    }
+
+  }
+
   // Call the detector's search method with both HSV ranges
   std::vector<_Float32> points = detector->search(frame);
 

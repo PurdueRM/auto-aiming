@@ -23,6 +23,7 @@ create_wrapper_script() {
 
 source /opt/ros/humble/setup.bash
 source /home/jason/ros2-ws/install/setup.sh
+source /home/jason/ros2-ws/auto-aiming/install/setup.sh
 
 # Sleep to give system time to stabilize
 sleep 5

@@ -121,7 +121,10 @@ build() {
         # print checkmark
         print_green "[☺] Build successful."
         sleep 0.2
-        source install/setup.sh
+        #source install/setup.sh
+        source /opt/ros/humble/setup.bash
+        source /home/jason/ros2-ws/install/setup.sh
+        source /home/jason/ros2-ws/auto-aiming/install/setup.sh
     else
         print_red "Build failed. See $LOG_FILE for more information."
         exit 1
@@ -138,7 +141,9 @@ test() {
     # Check if a package name is provided
     local package_name=$1
     if [[ $package_name ]]; then
-        source install/setup.sh
+        source /opt/ros/humble/setup.bash
+        source /home/jason/ros2-ws/install/setup.sh
+        source /home/jason/ros2-ws/auto-aiming/install/setup.sh
         res=$(ros2 pkg list | grep -c "$package_name$")
         if [[ $res -ne 1 ]]; then
             print_red "Package [$package_name] not found for testing"

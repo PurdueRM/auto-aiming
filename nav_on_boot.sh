@@ -23,6 +23,7 @@ create_wrapper_script() {
 
 source /opt/ros/humble/setup.bash
 source /home/jason/ros2-ws/install/setup.sh
+source /home/jason/ros2-ws/auto-aiming/install/setup.sh
 
 # Sleep to give system time to stabilize
 sleep 5
@@ -33,7 +34,7 @@ mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d_%H-%M-%S')_navigation_log.txt"
 
 # Change to workspace and exec Python script
-cd /home/jason/ros2-ws/src/prm_autobot_2023
+cd /home/jason/ros2-ws/auto-aiming/src/prm_autobot_2023
 exec python3 nav.py >> "$LOG_FILE" 2>&1
 EOF
 

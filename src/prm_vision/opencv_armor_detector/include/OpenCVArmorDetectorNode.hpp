@@ -15,6 +15,9 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include <unordered_map>
+#include <filesystem>
+#include <cstdlib>
+#include <opencv2/imgcodecs.hpp>
 
 class OpenCVArmorDetectorNode : public rclcpp::Node
 {
@@ -51,6 +54,7 @@ private:
     image_transport::Subscriber image_subscriber;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr target_color_subscriber;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr is_navigating_subscriber;
+    rclcpp::Time last_saved_frame_time;
 };
 
 #endif // OPENCV_ARMOR_DETECTOR_NODE_HPP
