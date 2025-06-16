@@ -76,7 +76,8 @@ void ControlCommunicator::compute_aim(float bullet_speed, float target_x, float 
     pitch_yaw_gravity_model_movingtarget_const_v({ target_z, target_x, -target_y }, {0, 0, 0}, {0, 0, 9810}, 0.0, &p, &y, &impossible);
  
     pitch = -(float)p;
-    yaw = (float)y * -(target_x / abs(target_x)); // yaw is always returned positive, so multiply by sign of target_x
+    float sign = (target_x > 0) ? -1.0f : ((target_x < 0) ? 1.0f : 0.0f); // BUG: Yaw is always returned as positive, so multiple by the sign of the target robot's X coordinate
+    yaw = (float)y * sign;
 
     // lookup table for empirical pitch correction
     float dst = sqrt(target_x * target_x + target_y * target_y + target_z * target_z);

@@ -39,7 +39,8 @@ clean() {
 build() {
     print_green "[*] Building project with Release configuration and optimization flags."
 
-    build_args="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O3"
+    # Last two args needed to correctly build the livox lidar driver
+    build_args="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O3 -DROS_EDITION=ROS2 -DHUMBLE_ROS=humble"
 
     # Add the DEBUG flag if '--debug' or '-d' was provided
     if [[ "$debug" == "true" ]]; then
@@ -55,6 +56,7 @@ build() {
     if [ $? -eq 0 ]; then
         # print checkmark
         print_green "[☺ ] Build successful."
+        sleep 0.2
         source install/setup.sh
     else
         print_red "Build failed. See $LOG_FILE for more information."

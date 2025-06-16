@@ -39,6 +39,7 @@ public:
 private:
 	void publish_static_tf(float x, float y, float z, float roll, float pitch, float yaw, const char *frame_id, const char *child_frame_id);
 	void heart_beat_handler();
+	void measure_auto_aim_performance(bool AIMING);
 
 	uint32_t auto_aim_frame_id = 0;
 	uint32_t nav_frame_id = 0;

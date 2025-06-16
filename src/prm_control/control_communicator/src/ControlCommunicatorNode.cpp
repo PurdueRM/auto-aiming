@@ -67,12 +67,7 @@ void ControlCommunicatorNode::publish_static_tf(float x, float y, float z, float
 }
 
 void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs::msg::PredictedArmor> msg)
-{	
-	// Timing to monitor for degradation in performance
-	static rclcpp::Time last_time = this->now();
-	static int degraded_perf_count = 0;
-	rclcpp::Time curr_time = this->now();
-
+{
 	if (!control_communicator->is_connected || control_communicator->port_fd < 0)
 	{
 		RCLCPP_WARN(this->get_logger(), "UART Not connected, ignoring aim message.");
@@ -100,7 +95,15 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 
 	auto_aim_frame_id++;
 
-	// check performance for degradation in sending frequency
+	measure_auto_aim_performance(AIMING);
+}
+
+void ControlCommunicatorNode::measure_auto_aim_performance(bool AIMING)
+{
+	static rclcpp::Time last_time = this->now();
+	static int degraded_perf_count = 0;
+	rclcpp::Time curr_time = this->now();
+
 	rclcpp::Duration elapsed_time = curr_time - last_time;
 	last_time = curr_time;
 	float TARGET_FREQUENCY = 90.0; // Hz
@@ -182,7 +185,7 @@ void ControlCommunicatorNode::read_uart()
 
     if (!control_communicator->read_uart(control_communicator->port_fd, package, this->port))
     {
-        RCLCPP_WARN(this->get_logger(), "UART read failed or misaligned.");
+		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read failed or misaligned.");
         return;
     }
 
@@ -192,7 +195,7 @@ void ControlCommunicatorNode::read_uart()
 	this->pitch_vel = package.pitch_vel;			// rad/s
 	this->pitch = package.pitch;					// rad
 	this->yaw_vel = package.yaw_vel;				// rad/s
-	this->is_enemy_red = package.ref_flags & 2;			// second lowest bit denotes if we are red
+	this->is_enemy_red = package.ref_flags & 2;		// second lowest bit denotes if we are red
 	this->is_match_running = package.ref_flags & 1; // LSB denotes if match is started
 	this->valid_read = true;
 
@@ -207,10 +210,11 @@ void ControlCommunicatorNode::read_uart()
 		old_target_robot_color = target_robot_color.data;	
 	}
 
-	if (this->auto_aim_frame_id % 5000 == 0 && this->auto_aim_frame_id != 0)
-	{
-		RCLCPP_INFO(this->get_logger(), "READ UART: x: %f | y: %f | x_vel: %f | y_vel: %f | yaw_vel: %f | pitch_vel: %f | pitch: %f | is_enemy_red: %d | is_match_running: %d", package.x, package.y, package.x_vel, package.y_vel, this->yaw_vel, this->pitch_vel, this->pitch, this->is_enemy_red, this->is_match_running);
-	}
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7529,
+		"READ UART: x: %.1f | y: %.1f | x_vel: %.1f | y_vel: %.1f | yaw_vel: %.1f | pitch_vel: %.1f | pitch: %.1f | orientation: %.1f | is_enemy_red: %d | is_match_running: %d",
+		package.x, package.y, package.x_vel, package.y_vel,
+		this->yaw_vel, this->pitch_vel, this->pitch, package.orientation,
+		this->is_enemy_red, this->is_match_running);
 
 	std_msgs::msg::Bool match_status;
 	match_status.data = this->is_match_running;
