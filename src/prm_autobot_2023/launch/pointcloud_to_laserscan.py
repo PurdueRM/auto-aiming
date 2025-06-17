@@ -17,7 +17,7 @@ def generate_launch_description():
                 'max_height': 0.7,
                 'angle_min': -3.14,
                 'angle_max': 3.14,
-                'range_min': 0.2,
+                'range_min': 0.15,
                 'range_max': 10.0,
                 'use_inf': True,
                 'inf_epsilon': 1e-6
