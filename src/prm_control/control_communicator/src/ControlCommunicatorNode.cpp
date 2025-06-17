@@ -210,7 +210,7 @@ void ControlCommunicatorNode::read_uart()
 		old_target_robot_color = target_robot_color.data;	
 	}
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7529,
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
 		"READ UART: x: %.1f | y: %.1f | x_vel: %.1f | y_vel: %.1f | yaw_vel: %.1f | pitch_vel: %.1f | pitch: %.1f | orientation: %.1f | is_enemy_red: %d | is_match_running: %d",
 		package.x, package.y, package.x_vel, package.y_vel,
 		this->yaw_vel, this->pitch_vel, this->pitch, package.orientation,

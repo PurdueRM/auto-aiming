@@ -13,11 +13,11 @@ def generate_launch_description():
                 ('/cloud_in', '/livox/lidar'),
             ],
             parameters=[{
-                'min_height': 0.0,
-                'max_height': 1.5,
-                'angle_min': -1.57,
-                'angle_max': 1.57,
-                'range_min': 0.1,
+                'min_height': 0.05,
+                'max_height': 0.7,
+                'angle_min': -3.14,
+                'angle_max': 3.14,
+                'range_min': 0.2,
                 'range_max': 10.0,
                 'use_inf': True,
                 'inf_epsilon': 1e-6

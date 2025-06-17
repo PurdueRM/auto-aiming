@@ -35,18 +35,13 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                 elif any(failure_string in line for failure_string in failure_strings):
                     print("  [x] FAILURE string found")
 
-                    # see if it's a process has died and reset usb
-                    if "process has died" in line or "Message Filter dropping message" in line:
-                        print("  [x] Process has died detected. Resetting USB devices...")
-                        usb_devices = subprocess.check_output("ls /sys/bus/usb/devices/ | grep usb", shell=True, universal_newlines=True).strip().split('\n')
-                        for usb_device in usb_devices:
-                            try:
-                                subprocess.run(f"echo purdueRM2023 | sudo -S sh -c \"echo -n '{usb_device}' > /sys/bus/usb/drivers/usb/unbind\"", shell=True, check=True)
-                                subprocess.run(f"echo purdueRM2023 | sudo -S sh -c \"echo -n '{usb_device}' > /sys/bus/usb/drivers/usb/bind\"", shell=True, check=True)
-                                print(f"  [✔] Successfully reset USB device: {usb_device}")
-                            except subprocess.CalledProcessError as e:
-                                print(f"  [x] Failed to reset USB device: {usb_device}")
-
+                    # see if it's a process has died and reset eth
+                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line:
+                        print("  [x] LiDAR Fail detected. Resetting ETH devices...")
+                        try:
+                            subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
+                        except exception as e:
+                            print("  [x] Failed to reset ETH devices:", e)
 
                     process.terminate()
                     for kill_string in kill_strings:
@@ -81,7 +76,7 @@ def kill_processes(kill_string):
                 print("  [x] Failed to kill process")
 
 def main():
-    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
+    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Init lds lidar fail!", "Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
 
 
     print("Navigation startup completed.")
