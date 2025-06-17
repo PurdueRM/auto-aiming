@@ -45,13 +45,12 @@ def generate_launch_description():
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_rviz = LaunchConfiguration('use_rviz')
 
-    control_comm_node = Node(package="control_communicator", executable="ControlCommunicatorNode")
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
                 get_package_share_directory('livox_ros_driver2'),
                 'launch_ROS2',
-                'rviz_MID360_launch.py'
+                'msg_MID360_launch.py'
             )
         )
     )
@@ -130,29 +129,15 @@ def generate_launch_description():
     )
 
     # Flatten the 3D pointcloud from 3D LiDAR to 2D LaserScan needed for navigation
-    pointcloud_to_laserscan_cmd = Node(
-        package='pointcloud_to_laserscan',
-        executable='pointcloud_to_laserscan_node',
-        name='pointcloud_to_laserscan_node',
-        remappings=[
-            ('/cloud_in', '/livox/lidar'),  # pointcloud_to_laserscan expects /cloud_in, but livox publishes on /livox/lidar
-        ],
-        parameters=[{
-            'min_height': 0.0,    # minimum height of points to include (in meters)
-            'max_height': 1.5,    # maximum height of points to include (in meters)
-            'angle_min': -1.57,   # start angle of laser scan (in radians)
-            'angle_max': 1.57,    # end angle of laser scan (in radians)
-            'range_min': 0.1,     # minimum range to include (in meters)
-            'range_max': 10.0,    # maximum range to include (in meters)
-            'use_inf': True,      # whether to use infinity for out of range points
-            'inf_epsilon': 1e-6   # epsilon value for infinity detection
-        }],
+    pointcloud_to_laserscan_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'pointcloud_to_laserscan.py'))
     )
 
 
     # Create the launch description and populate
     ld = LaunchDescription([
         lidar_launch,
+        pointcloud_to_laserscan_cmd
     ])
 
     # Declare the launch options

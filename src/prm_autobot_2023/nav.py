@@ -63,9 +63,9 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     #return
 
 
-                # Check if the command has been running for more than 15 seconds
-                if time.time() - start_time > 15:
-                    print("     Command execution timed out (more than 15 seconds). Retrying...")
+                # Check if the command has been running for more than 10 seconds
+                if time.time() - start_time > 10:
+                    print("     Command execution timed out (more than 10 seconds). Retrying...")
                     for kill_string in kill_strings:
                         kill_processes(kill_string)
                     break
@@ -81,7 +81,7 @@ def kill_processes(kill_string):
                 print("  [x] Failed to kill process")
 
 def main():
-    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
+    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
 
 
     print("Navigation startup completed.")
