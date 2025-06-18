@@ -4,6 +4,7 @@ import psutil
 import time
 
 num_of_success = 0
+total_restarts = 0
 
 def run(command, success_string, failure_string, kill_strings, num_checks):
     global num_of_success
@@ -36,7 +37,7 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     print("  [x] FAILURE string found")
 
                     # see if it's a process has died and reset eth
-                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line:
+                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line or "from base_link to map to become" in line:
                         print("  [x] LiDAR Fail detected. Resetting ETH devices...")
                         try:
                             subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
@@ -59,10 +60,19 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
 
 
                 # Check if the command has been running for more than 10 seconds
-                if time.time() - start_time > 10:
-                    print("     Command execution timed out (more than 10 seconds). Retrying...")
+                if time.time() - start_time > 17:
+                    print("     Command execution timed out (more than 17 seconds). Retrying...")
                     for kill_string in kill_strings:
                         kill_processes(kill_string)
+                    total_restarts += 1
+
+                    # if about to restart for a 4th time (3 attempts), reset the system
+                    if total_restarts >= 3:
+                        print("  [x] Restarting system due to multiple failures...")
+                        try:
+                            subprocess.run("echo purdueRM2023 | sudo -S shutdown -r now", shell=True, check=True)
+                        except Exception as e:
+                            print("  [x] Failed to restart system:", e)
                     break
         time.sleep(1)
 
@@ -71,6 +81,7 @@ def kill_processes(kill_string):
         if kill_string in ' '.join(proc.info['cmdline']):
             # try to kill the process
             try:
+                print("  [x] Killing process:", proc.info['name'])
                 proc.terminate()
             except Exception as e:
                 print("  [x] Failed to kill process")

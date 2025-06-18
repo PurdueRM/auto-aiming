@@ -97,7 +97,7 @@ class Navigator(Node):
 ####################################
 
 class PoseSchedulerStateMachine(Node):
-    GOAL_TIMEOUT = 20  # seconds
+    GOAL_TIMEOUT = 30  # seconds
 
     def __init__(self, navigator: Navigator):
         super().__init__('pose_scheduler_sm')
@@ -120,7 +120,7 @@ class PoseSchedulerStateMachine(Node):
 
             "FAR_RIGHT": self._make_pose([4.5, -8.0]),
             "INTERSECT": self._make_pose([3.29, 0.0]),
-            "FAR": self._make_pose([10.0, 2.5]),
+            "FAR": self._make_pose([8.0, 2.5]),
             "FURTHER": self._make_pose([14.5, 3.0]),
             "HALFWAY_RIGHT": self._make_pose([3.7, -3.5]),
         }
@@ -131,7 +131,6 @@ class PoseSchedulerStateMachine(Node):
             20: "HALFWAY_RIGHT",
             30: "INTERSECT",
             40: "HOME",
-            50: "FURTHER",
             60: "FAR",
             70: "HOME"
         }

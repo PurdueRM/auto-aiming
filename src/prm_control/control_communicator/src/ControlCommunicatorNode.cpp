@@ -81,7 +81,7 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, yaw, pitch, impossible);
 	bool AIMING = (msg->x != 0 || msg->y != 0 || msg->z != 0);
 
-	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
+	if (this->auto_aim_frame_id % 300 == 0 && this->auto_aim_frame_id != 0)
 	{
 		float dst = sqrt(pow(msg->x, 2) + pow(msg->y, 2) + pow(msg->z, 2));
 		RCLCPP_INFO(this->get_logger(), "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
@@ -146,7 +146,7 @@ void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::m
 	write(control_communicator->port_fd, &package, sizeof(PackageOut));
 	fsync(control_communicator->port_fd);
 
-	RCLCPP_INFO(this->get_logger(), "x_vel = %f, y_vel = %f, yaw = %f", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad);
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "x_vel = %f, y_vel = %f, yaw = %f", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad);
 }
 
 void ControlCommunicatorNode::heart_beat_handler()
