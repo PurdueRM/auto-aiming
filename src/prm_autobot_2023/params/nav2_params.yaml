@@ -1,11 +1,11 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.01 #0.005 #0.2
-    alpha2: 0.01 #0.005 #0.2
-    alpha3: 0.01 #0.005 #0.2
-    alpha4: 0.01 #0.005 #0.2
-    alpha5: 0.01 #0.005 #0.2
+    alpha1: 0.2 #0.005 #0.2
+    alpha2: 0.2 #0.005 #0.2
+    alpha3: 0.2 #0.005 #0.2
+    alpha4: 0.2 #0.005 #0.2
+    alpha5: 0.2 #0.005 #0.2
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -38,7 +38,7 @@ amcl:
     z_rand: 0.1
     z_short: 0.05
     scan_topic: scan
-    queue_size: 1000
+    queue_size: 10
     set_initial_pose: true
     initial_pose:
       x: -0.5
@@ -118,11 +118,11 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner" 
       debug_trajectory_details: True
-      min_vel_x: -1.5
-      min_vel_y: -1.5
+      min_vel_x: -3.5
+      min_vel_y: -3.5
       min_vel_theta: 0.0
-      max_vel_x: 1.5
-      max_vel_y: 1.5
+      max_vel_x: 3.5
+      max_vel_y: 3.5
       max_vel_theta: 0.0
       min_speed_xy: 0.2
       max_speed_xy: 3.5
@@ -137,9 +137,9 @@ controller_server:
       decel_lim_y: -8.5
       decel_lim_theta: -3.5
       vx_samples: 20
-      vy_samples: 15
-      vtheta_samples: 2
-      sim_time: 0.7 #1.7
+      vy_samples: 20
+      vtheta_samples: 1
+      sim_time: 0.85 #1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -149,7 +149,7 @@ controller_server:
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 25.0
-      PathAlign.scale: 32.0
+      PathAlign.scale: 20.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
       GoalAlign.forward_point_distance: 0.1
@@ -172,8 +172,8 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: True
       rolling_window: true
-      width: 10
-      height: 10
+      width: 15
+      height: 15
       resolution: 0.05
       #robot_radius: 0.22
       footprint: "[ [0.3, 0.3], [0.3, -0.3], [-0.3, -0.3], [-0.3, 0.3] ]"
@@ -181,8 +181,8 @@ local_costmap:
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.0
-        inflation_radius: 0.8
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.4
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -279,9 +279,7 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
-    recovery_plugins: ["spin", "back_up", "wait"]
-    spin:
-      plugin: "nav2_behaviors/Spin"
+    recovery_plugins: ["back_up", "wait"]
     back_up:
       plugin: "nav2_behaviors/BackUp"
     wait:

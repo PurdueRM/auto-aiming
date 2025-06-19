@@ -15,6 +15,7 @@ def run(command, success_string, failure_string, kill_strings, num_checks):
 
 def run_command(command, success_strings, failure_strings, kill_strings, num_checks):
     global num_of_success
+    global total_restarts
     success = 0
     
     for kill_string in kill_strings:
@@ -37,7 +38,7 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     print("  [x] FAILURE string found")
 
                     # see if it's a process has died and reset eth
-                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line or "from base_link to map to become" in line:
+                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line:
                         print("  [x] LiDAR Fail detected. Resetting ETH devices...")
                         try:
                             subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
@@ -47,6 +48,8 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     process.terminate()
                     for kill_string in kill_strings:
                         kill_processes(kill_string)
+                    total_restarts += 1
+                    check_total_restarts()
                     break  # Break the inner loop and retry
 
                 if num_of_success != 0 and any(success_string not in line for success_string in success_strings):
@@ -67,14 +70,20 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     total_restarts += 1
 
                     # if about to restart for a 4th time (3 attempts), reset the system
-                    if total_restarts >= 3:
-                        print("  [x] Restarting system due to multiple failures...")
-                        try:
-                            subprocess.run("echo purdueRM2023 | sudo -S shutdown -r now", shell=True, check=True)
-                        except Exception as e:
-                            print("  [x] Failed to restart system:", e)
+                    check_total_restarts()
+                   
                     break
         time.sleep(1)
+
+def check_total_restarts():
+    global total_restarts
+    if total_restarts >= 3:
+        print("  [x] Too many restarts detected. Resetting the system...")
+        try:
+            subprocess.run("echo purdueRM2023 | sudo -S reboot", shell=True, check=True)
+        except Exception as e:
+            print("  [x] Failed to reset the system:", e)
+        total_restarts = 0
 
 def kill_processes(kill_string):
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):

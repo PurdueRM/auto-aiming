@@ -26,7 +26,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	publish_static_tf(158.7f / 1000.f, 0.f / 1000.f, 47.5 / 1000.f, 0, 0, 0, "pitch_link", "camera_link");
 	publish_static_tf(0, 0, 478.f / 1000.f, 0, 0, 0, "base_link", "yaw_link");
 	publish_static_tf(0, 0, 0, 0, 0, 0, "base_footprint", "base_link");
-	publish_static_tf(0, 0, 0.3, 0, 0, 0, "base_link", "laser");
+	publish_static_tf(0, 0, 0.65, 0, 0, 0, "base_link", "laser");
 
 	this->heart_beat_timer = this->create_wall_timer(1000ms, std::bind(&ControlCommunicatorNode::heart_beat_handler, this));
 	this->auto_aim_subscriber = this->create_subscription<vision_msgs::msg::PredictedArmor>(
@@ -135,6 +135,13 @@ void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::m
 		return;
 	}
 
+	static rclcpp::Time last_time = this->now();
+	rclcpp::Time curr_time = this->now();
+	rclcpp::Duration elapsed_time = curr_time - last_time;
+	last_time = curr_time;
+
+	float frequency = 1.0 / elapsed_time.seconds();
+
 	PackageOut package;
 
 	package.frame_id = 0xAA;
@@ -146,7 +153,7 @@ void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::m
 	write(control_communicator->port_fd, &package, sizeof(PackageOut));
 	fsync(control_communicator->port_fd);
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "x_vel = %f, y_vel = %f, yaw = %f", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad);
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "x_vel = %.1f, y_vel = %.1f, yaw = %.1f, frequency = %.1f Hz", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad, frequency);
 }
 
 void ControlCommunicatorNode::heart_beat_handler()
