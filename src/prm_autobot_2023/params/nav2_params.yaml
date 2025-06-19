@@ -1,11 +1,11 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.2 #0.005 #0.2
-    alpha2: 0.2 #0.005 #0.2
-    alpha3: 0.2 #0.005 #0.2
-    alpha4: 0.2 #0.005 #0.2
-    alpha5: 0.2 #0.005 #0.2
+    alpha1: 0.1 #0.005 #0.2
+    alpha2: 0.1 #0.005 #0.2
+    alpha3: 0.1 #0.005 #0.2
+    alpha4: 0.1 #0.005 #0.2
+    alpha5: 0.1 #0.005 #0.2
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -182,7 +182,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.4
+        inflation_radius: 0.45
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
