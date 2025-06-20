@@ -96,23 +96,48 @@ MVCameraNode::MVCameraNode(const rclcpp::NodeOptions &options) : Node("mv_camera
     // Add callback to the set parameter event
     params_callback_handle_ = this->add_on_set_parameters_callback(std::bind(&MVCameraNode::parametersCallback, this, std::placeholders::_1));
 
+    // Subscribe to navigation status
+    nav_status_ = "";
+    nav_status_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/nav_status", 1,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            nav_status_ = msg->data;
+        });
+
     seq_ = 0;
     capture_thread_ = std::thread(std::bind(&MVCameraNode::capture_frame, this));
 }
 
 void MVCameraNode::capture_frame()
 {
-
+    static std::string prior_nav_status = "";
     RCLCPP_INFO_ONCE(this->get_logger(), "Starting capture threads");
     
     image_msg_.header.frame_id = "camera_frame";
     image_msg_.encoding = "rgb8";
 
     rclcpp::WallRate loop_rate(fps_ + 1);
+    rclcpp::WallRate delay(10); // Sleep when navigating
 
     while (rclcpp::ok())
     {
-        
+        if (prior_nav_status != nav_status_)
+        {
+            if (nav_status_ == "NAVIGATING")
+            {
+                RCLCPP_INFO(this->get_logger(), "Camera stopped due to navigation status: %s", nav_status_.c_str());
+            }
+            else
+            {
+                RCLCPP_INFO(this->get_logger(), "Camera resumed, current navigation status: %s", nav_status_.c_str());
+            }
+            prior_nav_status = nav_status_;
+        }
+        if (nav_status_ == "NAVIGATING")
+        {
+            delay.sleep();
+            continue;
+        }
         if (CameraGetImageBuffer(h_camera_, &s_frame_info_, &pby_buffer_, 1000) == CAMERA_STATUS_SUCCESS)
         {
             CameraImageProcess(h_camera_, pby_buffer_, image_msg_.data.data(), &s_frame_info_);
