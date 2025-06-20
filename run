@@ -28,6 +28,39 @@ print_blue "        \__/  <__>  <__>  <__>  <__>       "
 print_blue "                                           "
 print_blue "-------------------------------------------"
 
+# Function to check if MindVision camera is attached and on USB 3.0
+check_mindvision_camera() {
+    echo "Checking for MindVision camera..."
+    success_count=0
+    for i in {1..20}; do
+        if lsusb | grep -q "MindVision"; then
+            ((success_count++))
+        else
+            success_count=0
+        fi
+        sleep 0.2
+    done
+
+    if [[ $success_count -eq 20 ]]; then
+        # Ensure camera is USB 3.0
+        bus=$(lsusb | grep "MindVision" | awk '{print $2}' | sed 's/^0*//')
+        speed=$(lsusb -t | grep "Bus 0$bus" | awk -F' ' '{print $NF}' | sed 's/,$//')
+        speed_value=$(echo "$speed" | sed 's/[^0-9]*//g')
+        if [[ "$speed_value" -lt 5000 ]]; then
+            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
+            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
+            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
+
+        else
+            print_green "[☺] MindVision camera detected on USB 3.0 bus $bus with speed $speed."
+        fi
+    else
+        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
+        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
+        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
+    fi
+}
+
 # Function to clean the workspace
 clean() {
     print_green "Cleaning workspace..."
@@ -55,7 +88,7 @@ build() {
 
     if [ $? -eq 0 ]; then
         # print checkmark
-        print_green "[☺ ] Build successful."
+        print_green "[☺] Build successful."
         sleep 0.2
         source install/setup.sh
     else
@@ -125,6 +158,9 @@ run() {
     
     # Run build first
     build
+
+    # Ensure Camera is connected
+    check_mindvision_camera
 
     print_green "[*] Running ROS2 launch: prm_launch $launch_file"
     ros2 launch prm_launch "$launch_file"

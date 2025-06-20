@@ -84,7 +84,7 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
 	{
 		float dst = sqrt(pow(msg->x, 2) + pow(msg->y, 2) + pow(msg->z, 2));
-		RCLCPP_INFO(this->get_logger(), "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
+		RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
 	}
 	
 	if (bytes_written != sizeof(PackageOut))
@@ -217,7 +217,7 @@ void ControlCommunicatorNode::read_uart()
 		old_target_robot_color = target_robot_color.data;	
 	}
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
 		"READ UART: x: %.2f | y: %.2f | x_vel: %.2f | y_vel: %.2f | yaw_vel: %.2f | pitch_vel: %.2f | pitch: %.2f | orientation: %.2f | is_enemy_red: %d | is_match_running: %d",
 		package.x, package.y, package.x_vel, package.y_vel,
 		this->yaw_vel, this->pitch_vel, this->pitch, package.orientation,

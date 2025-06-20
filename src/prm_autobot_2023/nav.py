@@ -38,7 +38,7 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     print("  [x] FAILURE string found")
 
                     # see if it's a process has died and reset eth
-                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line:
+                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line or "frame ID \"map\" passed to canTransform argument" in line:
                         print("  [x] LiDAR Fail detected. Resetting ETH devices...")
                         try:
                             subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
