@@ -26,7 +26,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	publish_static_tf(158.7f / 1000.f, 0.f / 1000.f, 47.5 / 1000.f, 0, 0, 0, "pitch_link", "camera_link");
 	publish_static_tf(0, 0, 478.f / 1000.f, 0, 0, 0, "base_link", "yaw_link");
 	publish_static_tf(0, 0, 0, 0, 0, 0, "base_footprint", "base_link");
-	publish_static_tf(0, 0, 0.65, 0, 0, 0, "base_link", "laser");
+	publish_static_tf(0.20, 0, 0.65, 0, 0, 0, "base_link", "laser");
 
 	this->heart_beat_timer = this->create_wall_timer(1000ms, std::bind(&ControlCommunicatorNode::heart_beat_handler, this));
 	this->auto_aim_subscriber = this->create_subscription<vision_msgs::msg::PredictedArmor>(

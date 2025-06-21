@@ -22,6 +22,9 @@ create_wrapper_script() {
 source /opt/ros/humble/setup.bash
 source /home/purduerm/ros2-ws/install/setup.bash
 
+# Sleep to give system time to stabilize
+sleep 5
+
 # Create log directory and log file
 LOG_DIR="/home/purduerm/auto_aim_logs"
 mkdir -p "$LOG_DIR"
