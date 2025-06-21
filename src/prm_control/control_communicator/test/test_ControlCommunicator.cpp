@@ -88,7 +88,7 @@ TEST_F(ControlCommunicatorTest, test_read_uart_values)
 
         // Validate the package data
         EXPECT_EQ(package.head, 0xAA);          // Check head byte
-        EXPECT_EQ(package.ref_flags & 0x01, 0); // Check ref_flags (LSB should be 0 since match not started)
+        EXPECT_EQ(package.game_status, 0);      // Check match not started
         EXPECT_LT(package.pitch, M_PI);         // Check pitch value
         EXPECT_GT(package.pitch, -M_PI);        // Check pitch value
         EXPECT_LT(package.pitch_vel, M_PI);     // Check pitch velocity

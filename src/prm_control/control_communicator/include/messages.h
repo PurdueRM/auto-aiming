@@ -46,19 +46,20 @@ typedef struct  _PackageOut
 
 typedef struct __attribute__((__packed__)) _PackageIn
 {
-	uint8_t head;
-	uint8_t ref_flags;
-	float pitch;	 // rad
-	float pitch_vel; // rad/s
-	float yaw_vel;	 // rad/s (ccw: +, cw: -)
-
-	float x;		   // m
-	float y;		   // m
-	float orientation; // rad (ccw: +, cw: -)
-
-	float x_vel; // m/s
-	float y_vel; // m/s
-	// uint8_t is_blue;   //  0 = red, 1 = blue
+	uint8_t head; 					// header byte 0xAA
+	uint8_t enemy_color_is_red; 	// 1 for red and 0 for blue
+	uint8_t game_status; 			// 0 for not started, 1 for preperation stage, 2 for 15 seconds referee check, 3 for 5 seconds count down, 4 for match going, 5 for calculating match result
+	uint8_t rfid; 					// bit 0 for resupply, bit 1 for center zone
+	float pitch;        			// rad
+	float pitch_vel; 				// rad/s
+	float yaw_vel;   				// rad/s
+	float x;         				// m (global frame)
+	float y;         				// m (global frame)
+	float orientation;        		// rad (gimbal frame)
+	float x_vel;         			// m/s (gimbal frame)
+	float y_vel;         			// m/s (gimbal frame)
+	uint16_t HP;					// Sentry HP (full health is 400)
+	uint16_t reserved; 				// reserved for future use
 } __attribute__((packed)) PackageIn;
 
 #endif // _MESSAGES_H

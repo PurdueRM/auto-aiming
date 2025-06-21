@@ -44,15 +44,15 @@ check_mindvision_camera() {
     if [[ $success_count -eq 20 ]]; then
         # Ensure camera is USB 3.0
         bus=$(lsusb | grep "MindVision" | awk '{print $2}' | sed 's/^0*//')
-        speed=$(lsusb -t | grep "Bus 0$bus" | awk -F' ' '{print $NF}' | sed 's/,$//')
+        speed=$(lsusb -t | grep "Bus 0*$bus" | grep -oP ', \K[0-9]+[MGK]?' | head -n1)
         speed_value=$(echo "$speed" | sed 's/[^0-9]*//g')
+
         if [[ "$speed_value" -lt 5000 ]]; then
             print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
             print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
             print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
-
         else
-            print_green "[☺] MindVision camera detected on USB 3.0 bus $bus with speed $speed."
+            print_green "[☺] MindVision camera detected on USB 3.0 bus [$bus] with speed ${speed}."
         fi
     else
         print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"

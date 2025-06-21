@@ -35,7 +35,9 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 		"cmd_vel", 1, std::bind(&ControlCommunicatorNode::nav_handler, this, _1));
 	this->odometry_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
 	this->target_robot_color_publisher = this->create_publisher<std_msgs::msg::String>("color_set", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
-	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
+	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)));
+	this->rfid_publisher = this->create_publisher<std_msgs::msg::String>("rfid", rclcpp::QoS(rclcpp::KeepLast(1)));
+	this->hp_publisher = this->create_publisher<std_msgs::msg::Int16>("hp", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->uart_read_timer = this->create_wall_timer(4ms, std::bind(&ControlCommunicatorNode::read_uart, this));
 
 	RCLCPP_INFO(this->get_logger(), "Control Communicator Node Started.");
@@ -199,33 +201,59 @@ void ControlCommunicatorNode::read_uart()
     rclcpp::Time curr_time = this->now();
 
 	// Handle TF
-	this->pitch_vel = package.pitch_vel;			// rad/s
-	this->pitch = package.pitch;					// rad
-	this->yaw_vel = package.yaw_vel;				// rad/s
-	this->is_enemy_red = package.ref_flags & 2;		// second lowest bit denotes if we are red
-	this->is_match_running = package.ref_flags & 1; // LSB denotes if match is started
+	this->is_enemy_red = package.enemy_color_is_red; 	// 1 for red and 0 for blue
+	this->is_match_running = package.game_status == 4; 	// 0 for not started, 1 for preperation stage, 2 for 15 seconds referee check, 3 for 5 seconds count down, 4 for match going, 5 for calculating match result
+	this->in_resupply_zone = package.rfid & 1; 			// bit 0 for resupply
+	this->in_center_zone = package.rfid & 2; 			// bit 1 for center zone
+	this->pitch = package.pitch;        				// rad
+	this->pitch_vel = package.pitch_vel; 				// rad/s
+	this->yaw_vel = package.yaw_vel;   					// rad/s
 	this->valid_read = true;
 
-	// publishing color and match status
-	std_msgs::msg::String target_robot_color; 
-	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7000,
+		"READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
+		package.x, package.y, package.orientation, package.x_vel, package.y_vel,
+		package.pitch, package.pitch_vel, package.yaw_vel,
+		package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
 
-	if (old_target_robot_color != target_robot_color.data)
-	{
-		RCLCPP_INFO(this->get_logger(), "Target Robot Color: %s", target_robot_color.data.c_str());
-		target_robot_color_publisher->publish(target_robot_color);
-		old_target_robot_color = target_robot_color.data;	
-	}
+	///////////////////////////////
+	// Publishers for match data //
+	///////////////////////////////
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
-		"READ UART: x: %.2f | y: %.2f | x_vel: %.2f | y_vel: %.2f | yaw_vel: %.2f | pitch_vel: %.2f | pitch: %.2f | orientation: %.2f | is_enemy_red: %d | is_match_running: %d",
-		package.x, package.y, package.x_vel, package.y_vel,
-		this->yaw_vel, this->pitch_vel, this->pitch, package.orientation,
-		this->is_enemy_red, this->is_match_running);
-
+	// Match status 
 	std_msgs::msg::Bool match_status;
 	match_status.data = this->is_match_running;
 	match_status_publisher->publish(match_status);
+
+	// Target robot color
+	std_msgs::msg::String target_robot_color; 
+	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
+	target_robot_color_publisher->publish(target_robot_color);
+
+	// RFID
+	std_msgs::msg::String rfid_msg;
+	if (this->in_resupply_zone)
+	{
+		rfid_msg.data = "resupply";
+	}
+	else if (this->in_center_zone)
+	{
+		rfid_msg.data = "center";
+	}
+	else
+	{
+		rfid_msg.data = "none";
+	}
+	rfid_publisher->publish(rfid_msg);
+
+	// HP
+	std_msgs::msg::Int16 hp_msg;
+	hp_msg.data = package.HP;
+	hp_publisher->publish(hp_msg);
+
+	///////////////////////////////////
+	// End publishers for match data //
+	///////////////////////////////////
 
 	geometry_msgs::msg::TransformStamped pitch_tf;
 	pitch_tf.header.stamp = curr_time;

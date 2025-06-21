@@ -54,7 +54,13 @@ void OpenCVArmorDetectorNode::is_navigating_callback(const std_msgs::msg::String
 
 rcl_interfaces::msg::SetParametersResult OpenCVArmorDetectorNode::target_color_callback(const std_msgs::msg::String::SharedPtr color_msg)
 {
-  // RCLCPP_INFO(get_logger(), "Target color changed to: %s|", color_msg->data.c_str());
+  static TargetColor last_target_color;
+  if (detector->getConfig()._target_color != last_target_color)
+  
+  {
+    RCLCPP_INFO(get_logger(), "Target color changed to %s", color_msg->data.c_str());
+    last_target_color = detector->getConfig()._target_color;
+  }
   return parameters_callback({rclcpp::Parameter("_target_red", strcmp(color_msg->data.c_str(), "red") == 0)});
 }
 
