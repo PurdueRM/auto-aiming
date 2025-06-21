@@ -17,6 +17,7 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
     global num_of_success
     global total_restarts
     success = 0
+    tf_failure_count = 0  # Counter for tf failures
     
     for kill_string in kill_strings:
         kill_processes(kill_string)
@@ -44,13 +45,26 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                             subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
                         except exception as e:
                             print("  [x] Failed to reset ETH devices:", e)
-
+                            
                     process.terminate()
                     for kill_string in kill_strings:
                         kill_processes(kill_string)
                     total_restarts += 1
                     check_total_restarts()
                     break  # Break the inner loop and retry
+
+                # See if tf error with lidar and restart NetworkManager
+                if "Timed out waiting for transform from base_link to map to become available" in line:
+                    tf_failure_count += 1
+                    print(f"  [!] Detected tf error ({tf_failure_count})")
+                    if tf_failure_count >= 3:
+                        print("  [!] tf error repeated 3+ times. Restarting NetworkManager...")
+                        try:
+                            subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
+                        except Exception as e:
+                            print("  [x] Failed to restart NetworkManager:", e)
+                        tf_failure_count = 0  # Reset counter after restart
+
 
                 if num_of_success != 0 and any(success_string not in line for success_string in success_strings):
                     print("  [x] SUCCESS string not found, resetting... (", round(time.time() - start_time, 1), "/ 15 until reset)")
