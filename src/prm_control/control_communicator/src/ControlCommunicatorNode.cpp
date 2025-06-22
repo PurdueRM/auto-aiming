@@ -207,7 +207,7 @@ void ControlCommunicatorNode::read_uart()
 	this->in_center_zone = package.rfid & 2; 			// bit 1 for center zone
 	this->pitch = package.pitch;        				// rad
 	this->pitch_vel = package.pitch_vel; 				// rad/s
-	this->yaw_vel = package.yaw_vel;   					// rad/s
+	this->yaw_vel = package.yaw_vel;   			 		// rad/s
 	this->valid_read = true;
 
 	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7000,
