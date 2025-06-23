@@ -31,34 +31,65 @@ print_blue "-------------------------------------------"
 # Function to check if MindVision camera is attached and on USB 3.0
 check_mindvision_camera() {
     echo "Checking for MindVision camera..."
-    success_count=0
-    for i in {1..20}; do
-        if lsusb | grep -q "MindVision"; then
-            ((success_count++))
+    local retries=0
+    local max_retries=3
+
+    while (( retries < max_retries )); do
+        success_count=0
+        for i in {1..20}; do
+            if lsusb | grep -q "MindVision"; then
+                ((success_count++))
+            else
+                success_count=0
+            fi
+            sleep 0.2
+        done
+
+        if [[ $success_count -eq 20 ]]; then
+            # Ensure camera is USB 3.0
+            bus=$(lsusb | grep "MindVision" | awk '{print $2}' | sed 's/^0*//')
+            speed=$(lsusb -t | grep "Bus 0*$bus" | grep -oP ', \K[0-9]+[MGK]?' | head -n1)
+            speed_value=$(echo "$speed" | sed 's/[^0-9]*//g')
+
+            echo "MindVision camera detected on bus $bus with speed $speed."
+
+            if [[ "$speed_value" -lt 5000 ]]; then
+                print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus! Reloading USB Drivers... (attempt $((retries+1))/$max_retries)"
+                ((retries++))
+                rebind_usb
+                continue
+            else
+                print_green "[☺] MindVision camera detected on USB 3.0 bus [$bus] with speed ${speed}."
+                return 0
+            fi
         else
-            success_count=0
+            print_red "[!] WARN: MindVision camera not detected (attempt $((retries+1))/$max_retries)"
+            ((retries++))
+            rebind_usb
         fi
-        sleep 0.2
     done
 
-    if [[ $success_count -eq 20 ]]; then
-        # Ensure camera is USB 3.0
-        bus=$(lsusb | grep "MindVision" | awk '{print $2}' | sed 's/^0*//')
-        speed=$(lsusb -t | grep "Bus 0*$bus" | grep -oP ', \K[0-9]+[MGK]?' | head -n1)
-        speed_value=$(echo "$speed" | sed 's/[^0-9]*//g')
+    print_red "[!] ERROR: MindVision camera not detected or not on USB 3.0 after $max_retries attempts."
+    return 1
+}
 
-        if [[ "$speed_value" -lt 5000 ]]; then
-            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
-            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
-            print_red "[!] WARN: MindVision camera is not connected to a USB 3.0 bus!"
-        else
-            print_green "[☺] MindVision camera detected on USB 3.0 bus [$bus] with speed ${speed}."
-        fi
-    else
-        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
-        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
-        print_red "[!] WARN: MindVision camera not detected on USB 3.0 bus!"
-    fi
+rebind_usb() {
+    # Get all USB controller PCI IDs
+    usb_ids=$(lspci | grep -i usb | awk '{print "0000:" $1}')
+
+    # Unbind all USB controllers
+    for id in $usb_ids; do
+        echo "Unbinding $id"
+        echo "purdueRM2023" | sudo -S echo -n "$id" | sudo tee "/sys/bus/pci/devices/$id/driver/unbind" > /dev/null
+    done
+
+    sleep 0.5
+
+    # Rebind all USB controllers
+    for id in $usb_ids; do
+        echo "Rebinding $id"
+        echo "purdueRM2023" | sudo -S echo -n "$id" | sudo tee "/sys/bus/pci/drivers/xhci_hcd/bind" > /dev/null
+    done
 }
 
 # Function to clean the workspace
