@@ -123,16 +123,12 @@ class PoseSchedulerStateMachine(Node):
             "FAR": self._make_pose([8.0, 2.5]),
             "FURTHER": self._make_pose([14.5, 3.0]),
             "HALFWAY_RIGHT": self._make_pose([3.7, -3.5]),
+
+            "OUR_HALL": self._make_pose([1.1, -1.3]),
         }
 
         self.pose_queue = {
-            2: "INTERSECT",
-            10: "FAR_RIGHT",
-            20: "HALFWAY_RIGHT",
-            30: "INTERSECT",
-            40: "HOME",
-            60: "FAR",
-            70: "HOME"
+            2: "OUR_HALL"
         }
 
         self.override_pose_name = "HEAL"

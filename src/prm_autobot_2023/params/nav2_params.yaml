@@ -1,11 +1,11 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.1 #0.005 #0.2
-    alpha2: 0.1 #0.005 #0.2
-    alpha3: 0.1 #0.005 #0.2
-    alpha4: 0.1 #0.005 #0.2
-    alpha5: 0.1 #0.005 #0.2
+    alpha1: 0.15 #0.005 #0.2
+    alpha2: 0.15 #0.005 #0.2
+    alpha3: 0.15 #0.005 #0.2
+    alpha4: 0.15 #0.005 #0.2
+    alpha5: 0.15 #0.005 #0.2
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -14,11 +14,11 @@ amcl:
     global_frame_id: "map"
     lambda_short: 0.1
     laser_likelihood_max_dist: 4.0 #2.0
-    laser_max_range: 100.0
+    laser_max_range: 10.0
     laser_min_range: -1.0
     laser_model_type: "likelihood_field"
     max_beams: 60
-    max_particles: 2000
+    max_particles: 1500
     min_particles: 500
     odom_frame_id: "odom"
     pf_err: 0.1 #0.05
@@ -69,6 +69,7 @@ bt_navigator:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_follow_path_action_bt_node
     - nav2_back_up_action_bt_node
+    - nav2_spin_action_bt_node
     - nav2_wait_action_bt_node
     - nav2_clear_costmap_service_bt_node
     - nav2_is_stuck_condition_bt_node
@@ -117,28 +118,28 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner" 
       debug_trajectory_details: True
-      min_vel_x: -3.5
-      min_vel_y: -3.5
+      min_vel_x: -1.3
+      min_vel_y: -1.3
       min_vel_theta: 0.0
-      max_vel_x: 3.5
-      max_vel_y: 3.5
+      max_vel_x: 1.3
+      max_vel_y: 1.3
       max_vel_theta: 0.0
       min_speed_xy: 0.2
-      max_speed_xy: 3.5
+      max_speed_xy: 2.0
       min_speed_theta: 0.1
       max_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 6.5
-      acc_lim_y: 6.5
+      acc_lim_x: 4.5
+      acc_lim_y: 4.5
       acc_lim_theta: 3.0
-      decel_lim_x: -8.5
-      decel_lim_y: -8.5
+      decel_lim_x: -5.5
+      decel_lim_y: -5.5
       decel_lim_theta: -3.5
       vx_samples: 20
       vy_samples: 20
       vtheta_samples: 1
-      sim_time: 0.85 #1.7
+      sim_time: 0.7 #1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -171,17 +172,17 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: True
       rolling_window: true
-      width: 15
-      height: 15
+      width: 12
+      height: 12
       resolution: 0.05
       #robot_radius: 0.22
       footprint: "[ [0.3, 0.3], [0.3, -0.3], [-0.3, -0.3], [-0.3, 0.3] ]"
-      footprint_padding: 0.09
+      footprint_padding: 0.11
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.45
+        inflation_radius: 0.5
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True

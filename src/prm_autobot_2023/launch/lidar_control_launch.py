@@ -8,16 +8,28 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    autobot_dir = get_package_share_directory("prm_autobot_2023")
+    bringup_dir = get_package_share_directory('prm_autobot_2023')
+    prm_launch_dir = get_package_share_directory('prm_launch')
+    launch_dir = os.path.join(bringup_dir, 'launch')
 
     
     control_comm_node = Node(package="control_communicator", executable="ControlCommunicatorNode")
     lidar_launch = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(autobot_dir, "launch", "rplidar_range_limit_launch.py"))
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('livox_ros_driver2'),
+                'launch_ROS2',
+                'msg_MID360_launch.py'
             )
+        )
+    )
+
+    pointcloud_to_laserscan_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'pointcloud_to_laserscan.py'))
+    )
 
     return LaunchDescription([
         control_comm_node,
         lidar_launch,
-        # lidar_launch
+        pointcloud_to_laserscan_cmd
     ])
