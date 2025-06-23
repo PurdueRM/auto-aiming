@@ -35,7 +35,7 @@ TEST_F(ControlCommunicatorTest, test_start_uart_connection)
     if (PORT_EXISTS)
     {
         EXPECT_TRUE(control_communicator.start_uart_connection(port));
-        EXPECT_NE(control_communicator.port_fd, -1);    // Port should be opened
+        EXPECT_NE(control_communicator.port_fd, -1); // Port should be opened
 
         /**
          * Check UART configuration
@@ -87,14 +87,14 @@ TEST_F(ControlCommunicatorTest, test_read_uart_values)
         EXPECT_TRUE(result); // Ensure at least one successful read
 
         // Validate the package data
-        EXPECT_EQ(package.head, 0xAA);          // Check head byte
-        EXPECT_EQ(package.game_status, 0);      // Check match not started
-        EXPECT_LT(package.pitch, M_PI);         // Check pitch value
-        EXPECT_GT(package.pitch, -M_PI);        // Check pitch value
-        EXPECT_LT(package.pitch_vel, M_PI);     // Check pitch velocity
-        EXPECT_GT(package.pitch_vel, -M_PI);    // Check pitch velocity
-        EXPECT_LT(package.yaw_vel, M_PI);       // Check yaw velocity
-        EXPECT_GT(package.yaw_vel, -M_PI);      // Check yaw velocity
+        EXPECT_EQ(package.head, 0xAA);       // Check head byte
+        EXPECT_EQ(package.game_status, 0);   // Check match not started
+        EXPECT_LT(package.pitch, M_PI);      // Check pitch value
+        EXPECT_GT(package.pitch, -M_PI);     // Check pitch value
+        EXPECT_LT(package.pitch_vel, M_PI);  // Check pitch velocity
+        EXPECT_GT(package.pitch_vel, -M_PI); // Check pitch velocity
+        EXPECT_LT(package.yaw_vel, M_PI);    // Check yaw velocity
+        EXPECT_GT(package.yaw_vel, -M_PI);   // Check yaw velocity
 
         // package x field should exist and be a number
         EXPECT_NE(package.x, NAN);           // Check x position
@@ -113,17 +113,17 @@ TEST_F(ControlCommunicatorTest, test_read_uart_values)
 TEST_F(ControlCommunicatorTest, test_compute_aim)
 {
     ControlCommunicator control_communicator;
-    float target_x = 40.0;     // mm 
-    float target_y = 180.0;       // mm
-    float target_z = 1500.0;    // mm
-    float bullet_speed = 16.0;  // m/s
+    float target_x = 40.0;     // mm
+    float target_y = 180.0;    // mm
+    float target_z = 1500.0;   // mm
+    float bullet_speed = 16.0; // m/s
     float yaw, pitch;
     bool impossible;
 
     control_communicator.compute_aim(bullet_speed, target_x, target_y, target_z, yaw, pitch, impossible);
     EXPECT_EQ(impossible, false);   // Shot should be possible
     EXPECT_NEAR(yaw, 0.0, 2.0);     // Yaw = 0.0 since no X and Y offset
-    EXPECT_NEAR(pitch, 12.0, 1.50);  // Check pitch angle
+    EXPECT_NEAR(pitch, 12.0, 1.50); // Check pitch angle
 }
 
 TEST_F(ControlCommunicatorTest, test_aim)
@@ -140,7 +140,7 @@ TEST_F(ControlCommunicatorTest, test_aim)
         float target_z;
         float bullet_speed;
         float yaw, pitch;
-        bool impossible;
+        bool impossible, should_fire;
 
         // Now generate random values and test sending to board
         int NUM_ITERS = 100;
@@ -149,9 +149,9 @@ TEST_F(ControlCommunicatorTest, test_aim)
             target_x = 10.0 + rand() % 2000; // mm
             target_y = 10.0 + rand() % 2000; // mm
             target_z = 10.0 + rand() % 2000; // mm
-            bullet_speed = rand() % 20 + 1; // m/s
+            bullet_speed = rand() % 20 + 1;  // m/s
 
-            int bytes_written = control_communicator.aim(bullet_speed, target_x, target_y, target_z, yaw, pitch, impossible);
+            int bytes_written = control_communicator.aim(bullet_speed, target_x, target_y, target_z, should_fire, yaw, pitch, impossible);
             EXPECT_EQ(bytes_written, sizeof(PackageOut)); // Ensure complete package is written
         }
     }
@@ -161,7 +161,6 @@ TEST_F(ControlCommunicatorTest, test_aim)
         EXPECT_FALSE(control_communicator.start_uart_connection(port));
     }
 }
-
 
 int main(int argc, char **argv)
 {

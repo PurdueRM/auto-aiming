@@ -80,7 +80,7 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 	float yaw;
 	float pitch;
 	bool impossible;
-	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, yaw, pitch, impossible);
+	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, msg->fire, yaw, pitch, impossible);
 	bool AIMING = (msg->x != 0 || msg->y != 0 || msg->z != 0);
 
 	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
@@ -88,7 +88,7 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 		float dst = sqrt(pow(msg->x, 2) + pow(msg->y, 2) + pow(msg->z, 2));
 		RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
 	}
-	
+
 	if (bytes_written != sizeof(PackageOut))
 	{
 		RCLCPP_ERROR(this->get_logger(), "Failed to write complete package to UART. Bytes written: %d, Expected: %lu", bytes_written, sizeof(PackageOut));
@@ -108,7 +108,7 @@ void ControlCommunicatorNode::measure_auto_aim_performance(bool AIMING)
 
 	rclcpp::Duration elapsed_time = curr_time - last_time;
 	last_time = curr_time;
-	float TARGET_FREQUENCY = 90.0; // Hz
+	float TARGET_FREQUENCY = 90.0;				// Hz
 	float TARGET_PERIOD = 1 / TARGET_FREQUENCY; // seconds
 
 	if (degraded_perf_count > 50 && AIMING)
@@ -122,9 +122,10 @@ void ControlCommunicatorNode::measure_auto_aim_performance(bool AIMING)
 	}
 	if (elapsed_time.seconds() > TARGET_PERIOD && AIMING)
 	{
-		degraded_perf_count++;	
+		degraded_perf_count++;
 	}
-	else {
+	else
+	{
 		degraded_perf_count = 0;
 	}
 }
@@ -192,41 +193,41 @@ void ControlCommunicatorNode::read_uart()
 {
 	PackageIn package;
 
-    if (!control_communicator->read_uart(control_communicator->port_fd, package, this->port))
-    {
+	if (!control_communicator->read_uart(control_communicator->port_fd, package, this->port))
+	{
 		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read failed or misaligned.");
-        return;
-    }
+		return;
+	}
 
-    rclcpp::Time curr_time = this->now();
+	rclcpp::Time curr_time = this->now();
 
 	// Handle TF
-	this->is_enemy_red = package.enemy_color_is_red; 	// 1 for red and 0 for blue
-	this->is_match_running = package.game_status == 4; 	// 0 for not started, 1 for preperation stage, 2 for 15 seconds referee check, 3 for 5 seconds count down, 4 for match going, 5 for calculating match result
-	this->in_resupply_zone = package.rfid & 1; 			// bit 0 for resupply
-	this->in_center_zone = package.rfid & 2; 			// bit 1 for center zone
-	this->pitch = package.pitch;        				// rad
-	this->pitch_vel = package.pitch_vel; 				// rad/s
-	this->yaw_vel = package.yaw_vel;   			 		// rad/s
+	this->is_enemy_red = package.enemy_color_is_red;   // 1 for red and 0 for blue
+	this->is_match_running = package.game_status == 4; // 0 for not started, 1 for preperation stage, 2 for 15 seconds referee check, 3 for 5 seconds count down, 4 for match going, 5 for calculating match result
+	this->in_resupply_zone = package.rfid & 1;		   // bit 0 for resupply
+	this->in_center_zone = package.rfid & 2;		   // bit 1 for center zone
+	this->pitch = package.pitch;					   // rad
+	this->pitch_vel = package.pitch_vel;			   // rad/s
+	this->yaw_vel = package.yaw_vel;				   // rad/s
 	this->valid_read = true;
 
 	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7000,
-		"READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
-		package.x, package.y, package.orientation, package.x_vel, package.y_vel,
-		package.pitch, package.pitch_vel, package.yaw_vel,
-		package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
+						 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
+						 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
+						 package.pitch, package.pitch_vel, package.yaw_vel,
+						 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
 
 	///////////////////////////////
 	// Publishers for match data //
 	///////////////////////////////
 
-	// Match status 
+	// Match status
 	std_msgs::msg::Bool match_status;
 	match_status.data = this->is_match_running;
 	match_status_publisher->publish(match_status);
 
 	// Target robot color
-	std_msgs::msg::String target_robot_color; 
+	std_msgs::msg::String target_robot_color;
 	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
 	target_robot_color_publisher->publish(target_robot_color);
 
