@@ -106,6 +106,7 @@ class PoseSchedulerStateMachine(Node):
         self.match_started = False
         self.start_time = None
         self.low_health = False
+        self.health = None
 
         self.state = 'IDLE'
         self.current_pose_name = None
@@ -162,7 +163,9 @@ class PoseSchedulerStateMachine(Node):
             self.start_time = time.time()
 
     def _health_cb(self, msg):
-        self.low_health = msg.data < 400
+        self.low_health = msg.data < 400 and msg.data > 396
+        self.health = msg.data
+
 
     def _tick(self):
         if not self.match_started:
@@ -179,12 +182,12 @@ class PoseSchedulerStateMachine(Node):
         self.get_logger().info(f'Current nav time:  [{time.time() - self.start_time}] sec')
 
 
-        if self.low_health:
-            self.get_logger().info("Low health detected! Switching to OVERRIDE state")
-            self.navigator.cancel_goal()
-            self.state = 'OVERRIDE'
-            self._send_override_pose()
-            return
+        # if self.low_health:
+        #     self.get_logger().info(f'Low health detected [{self.health}]! Switching to OVERRIDE state')
+        #     self.navigator.cancel_goal()
+        #     self.state = 'OVERRIDE'
+        #     self._send_override_pose()
+        #     return
 
         if self.state == 'IDLE':
             if self.match_started:
