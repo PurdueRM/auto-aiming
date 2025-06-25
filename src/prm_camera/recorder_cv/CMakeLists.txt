@@ -7,7 +7,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
-find_package(OpenCV 4.6.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Set include directories
 include_directories(include ${OpenCV_INCLUDE_DIRS})

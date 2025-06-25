@@ -112,32 +112,19 @@ class PoseSchedulerStateMachine(Node):
         self.current_pose_start_time = None
 
         self.named_poses = {
-            "CENTER": self._make_pose([2.9, 1.0]),
-            "FAR_WALL": self._make_pose([-0.583, 1.25]),
-            "HOME": self._make_pose([-0.2, 0.0, 90]),
-            "HALF_METER_FORWARD": self._make_pose([0.5, 0.0]),
-            "HEAL": self._make_pose([0.7, -2.9, 90]),
+            "HOME": self._make_pose([0.0, 0.0]),
 
-            "FAR_RIGHT": self._make_pose([4.5, -8.0]),
-            "INTERSECT": self._make_pose([3.29, 0.0]),
-            "FAR": self._make_pose([8.0, 2.5]),
-            "FURTHER": self._make_pose([14.5, 3.0]),
-            "HALFWAY_RIGHT": self._make_pose([3.7, -3.5]),
-
-            "OUR_HALL": self._make_pose([-4.0, -4.0]),
-            "HOME": self._make_pose([2.0, -0.6]),
+            "CENTER_ZONE": self._make_pose([4.0, 6.0])
         }
 
         self.pose_queue = {
-            2: "OUR_HALL",
-            15: "HOME",
-            30: "OUR_HALL",
-            45: "HOME",
-            60: "OUR_HALL",
-            75: "HOME"
+            1: "CENTER_ZONE",
+            10: "CENTER_ZONE",
+            20: "CENTER_ZONE",
+            40: "CENTER_ZONE",
         }
 
-        self.override_pose_name = "HEAL"
+        self.override_pose_name = "HOME"
 
         # Subscribers
         self.create_subscription(Bool, 'match_start', self._match_cb, 10)
@@ -179,6 +166,13 @@ class PoseSchedulerStateMachine(Node):
         else:
             self.navigator.publish_nav_status(NAV_STATUS['IDLING'])
 
+        if self.low_health:
+            self.get_logger().info("Low health detected! Switching to OVERRIDE state")
+            self.navigator.cancel_goal()
+            self.state = 'OVERRIDE'
+            self._send_override_pose()
+            return
+
         if self.state == 'IDLE':
             if self.match_started:
                 self.get_logger().info("Transitioning to NAVIGATING state")
@@ -187,13 +181,6 @@ class PoseSchedulerStateMachine(Node):
                 self._send_next_pose()
 
         elif self.state == 'NAVIGATING':
-            if self.low_health:
-                self.get_logger().info("Low health detected! Switching to OVERRIDE state")
-                self.navigator.cancel_goal()
-                self.state = 'OVERRIDE'
-                self._send_override_pose()
-                return
-
             # Check for goal timeout
             if self._goal_timed_out():
                 self.get_logger().warn("Goal timed out, cancelling and sending next")

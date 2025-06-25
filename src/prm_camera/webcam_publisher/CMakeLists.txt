@@ -8,7 +8,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 
 find_package(ament_cmake_auto REQUIRED)
-find_package(OpenCV 4.6.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 ament_auto_find_build_dependencies()
 
 

@@ -91,13 +91,7 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
 
 def check_total_restarts():
     global total_restarts
-    if total_restarts >= 3:
-        print("  [x] Too many restarts detected. Resetting the system...")
-        try:
-            subprocess.run("echo purdueRM2023 | sudo -S reboot", shell=True, check=True)
-        except Exception as e:
-            print("  [x] Failed to reset the system:", e)
-        total_restarts = 0
+    total_restarts = 0
 
 def kill_processes(kill_string):
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
