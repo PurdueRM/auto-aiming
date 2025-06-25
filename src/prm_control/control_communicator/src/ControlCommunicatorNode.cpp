@@ -37,7 +37,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	this->target_robot_color_publisher = this->create_publisher<std_msgs::msg::String>("color_set", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
 	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->rfid_publisher = this->create_publisher<std_msgs::msg::String>("rfid", rclcpp::QoS(rclcpp::KeepLast(1)));
-	this->hp_publisher = this->create_publisher<std_msgs::msg::Int16>("hp", rclcpp::QoS(rclcpp::KeepLast(1)));
+	this->hp_publisher = this->create_publisher<std_msgs::msg::Int16>("health", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->uart_read_timer = this->create_wall_timer(4ms, std::bind(&ControlCommunicatorNode::read_uart, this));
 
 	RCLCPP_INFO(this->get_logger(), "Control Communicator Node Started.");

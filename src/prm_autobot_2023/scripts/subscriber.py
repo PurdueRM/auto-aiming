@@ -114,7 +114,7 @@ class PoseSchedulerStateMachine(Node):
         self.named_poses = {
             "HOME": self._make_pose([0.0, 0.0]),
 
-            "CENTER_ZONE": self._make_pose([4.0, 6.0])
+            "CENTER_ZONE": self._make_pose([2.0, 5.0])
         }
 
         self.pose_queue = {
@@ -122,6 +122,15 @@ class PoseSchedulerStateMachine(Node):
             10: "CENTER_ZONE",
             20: "CENTER_ZONE",
             40: "CENTER_ZONE",
+            60: "CENTER_ZONE",
+            80: "CENTER_ZONE",
+            100: "CENTER_ZONE",
+            120: "CENTER_ZONE",
+            140: "CENTER_ZONE",
+            160: "CENTER_ZONE",
+            180: "CENTER_ZONE",
+            200: "CENTER_ZONE",
+            220: "CENTER_ZONE",
         }
 
         self.override_pose_name = "HOME"
@@ -153,7 +162,7 @@ class PoseSchedulerStateMachine(Node):
             self.start_time = time.time()
 
     def _health_cb(self, msg):
-        self.low_health = msg.data < 300
+        self.low_health = msg.data < 400
 
     def _tick(self):
         if not self.match_started:
@@ -165,6 +174,10 @@ class PoseSchedulerStateMachine(Node):
             self.navigator.publish_nav_status(NAV_STATUS['NAVIGATING'])
         else:
             self.navigator.publish_nav_status(NAV_STATUS['IDLING'])
+
+        # print current nav time
+        self.get_logger().info(f'Current nav time:  [{time.time() - self.start_time}] sec')
+
 
         if self.low_health:
             self.get_logger().info("Low health detected! Switching to OVERRIDE state")
