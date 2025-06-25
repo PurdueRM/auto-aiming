@@ -211,7 +211,7 @@ void ControlCommunicatorNode::read_uart()
 	this->yaw_vel = package.yaw_vel;				   // rad/s
 	this->valid_read = true;
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 7000,
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
 						 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
 						 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
 						 package.pitch, package.pitch_vel, package.yaw_vel,

@@ -1,7 +1,7 @@
 image: rmul2025.pgm
 mode: trinary
 resolution: 0.028
-origin: [0.84, -3.04, 0]
+origin: [-2.00, -1.00, 0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.25

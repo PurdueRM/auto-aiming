@@ -72,7 +72,7 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'dorm.yaml'),
+        default_value=os.path.join(bringup_dir, 'maps', 'rmul2025.yaml'),
         description='Full path to map file to load')
 
     declare_params_file_cmd = DeclareLaunchArgument(

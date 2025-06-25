@@ -41,10 +41,10 @@ amcl:
     queue_size: 10
     set_initial_pose: true
     initial_pose:
-      x: 2.00
-      y: -0.6
+      x: 0.0
+      y: 0.0
       z: 0.0
-      yaw: 0.0
+      yaw: 1.6
 
 
 amcl_map_client:
