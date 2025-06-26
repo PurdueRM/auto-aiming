@@ -98,6 +98,7 @@ class Navigator(Node):
 
 class PoseSchedulerStateMachine(Node):
     GOAL_TIMEOUT = 30  # seconds
+    LOW_HEALTH_THRESHOLD = 396
 
     def __init__(self, navigator: Navigator):
         super().__init__('pose_scheduler_sm')
@@ -106,7 +107,7 @@ class PoseSchedulerStateMachine(Node):
         self.match_started = False
         self.start_time = None
         self.low_health = False
-        self.health = None
+        self.override_sent = False
 
         self.state = 'IDLE'
         self.current_pose_name = None
@@ -114,7 +115,6 @@ class PoseSchedulerStateMachine(Node):
 
         self.named_poses = {
             "HOME": self._make_pose([0.0, 0.0]),
-
             "CENTER_ZONE": self._make_pose([2.0, 5.0])
         }
 
@@ -163,9 +163,8 @@ class PoseSchedulerStateMachine(Node):
             self.start_time = time.time()
 
     def _health_cb(self, msg):
-        self.low_health = msg.data < 400 and msg.data > 396
-        self.health = msg.data
-
+        new_health = msg.data
+        self.low_health = new_health < self.LOW_HEALTH_THRESHOLD
 
     def _tick(self):
         if not self.match_started:
@@ -178,56 +177,59 @@ class PoseSchedulerStateMachine(Node):
         else:
             self.navigator.publish_nav_status(NAV_STATUS['IDLING'])
 
-        # print current nav time
-        self.get_logger().info(f'Current nav time:  [{time.time() - self.start_time}] sec')
+        self.get_logger().info(f'Current nav time: [{time.time() - self.start_time}] sec')
 
+        # Handle low health override
+        if self.low_health:
+            if self.state != 'OVERRIDE':
+                self.get_logger().warn("Entering LOW HEALTH OVERRIDE")
+                self.navigator.cancel_goal()
+                self.state = 'OVERRIDE'
+                self.override_sent = False
 
-        # if self.low_health:
-        #     self.get_logger().info(f'Low health detected [{self.health}]! Switching to OVERRIDE state')
-        #     self.navigator.cancel_goal()
-        #     self.state = 'OVERRIDE'
-        #     self._send_override_pose()
-        #     return
+            if not self.override_sent:
+                pose = self.named_poses[self.override_pose_name]
+                sent = self.navigator.send_goal(pose)
+                if sent:
+                    self.get_logger().info(f"Sent override HOME pose due to low health")
+                    self.override_sent = True
+            return
 
+        # If we just exited override
+        if self.state == 'OVERRIDE' and not self.low_health:
+            self.get_logger().info("Exiting LOW HEALTH OVERRIDE, resuming schedule")
+            self.state = 'NAVIGATING'
+            self.current_pose_start_time = None
+            return
+
+        # Normal state machine
         if self.state == 'IDLE':
             if self.match_started:
                 self.get_logger().info("Transitioning to NAVIGATING state")
                 self.state = 'NAVIGATING'
-                self.current_pose_start_time = None  # Reset
+                self.current_pose_start_time = None
                 self._send_next_pose()
 
         elif self.state == 'NAVIGATING':
-            # Check for goal timeout
             if self._goal_timed_out():
                 self.get_logger().warn("Goal timed out, cancelling and sending next")
                 self.navigator.cancel_goal()
                 self._send_next_pose()
                 return
 
-            # Check if it's time to send next pose
             if self._should_send_next_pose():
                 self.get_logger().info("Time to send next scheduled pose")
                 self.navigator.cancel_goal()
                 self._send_next_pose()
                 return
 
-            # If navigation finished and no more poses, transition to DONE
             if not self.navigator.is_navigating() and not self.pose_queue:
                 self.get_logger().info("All poses sent and navigation complete")
                 self.state = 'DONE'
                 return
 
-        elif self.state == 'OVERRIDE':
-            if not self.low_health:
-                self.get_logger().info("Health recovered, returning to NAVIGATING")
-                self.navigator.cancel_goal()
-                self.state = 'NAVIGATING'
-                self._send_next_pose()
-                return
-
         elif self.state == 'DONE':
             self.navigator.publish_nav_status(NAV_STATUS['IDLING'])
-            # Could add restart logic here if desired
 
         else:
             self.get_logger().warn(f"Unknown state: {self.state}")
@@ -250,10 +252,9 @@ class PoseSchedulerStateMachine(Node):
             return
 
         elapsed = time.time() - self.start_time
-        # Find the next pose to send based on elapsed time
         next_times = sorted(t for t in self.pose_queue if t <= elapsed)
         if not next_times:
-            return  # Not yet time for next pose
+            return
 
         next_time = next_times[0]
         pose_name = self.pose_queue.pop(next_time)
@@ -270,15 +271,6 @@ class PoseSchedulerStateMachine(Node):
             self.current_pose_start_time = time.time()
         else:
             self.get_logger().warn(f"Failed to send pose '{pose_name}'")
-
-    def _send_override_pose(self):
-        pose = self.named_poses[self.override_pose_name]
-        sent = self.navigator.send_goal(pose)
-        if sent:
-            self.get_logger().info(f"Sent OVERRIDE pose '{self.override_pose_name}'")
-            self.current_pose_start_time = time.time()
-        else:
-            self.get_logger().warn(f"Failed to send OVERRIDE pose '{self.override_pose_name}'")
 
 
 def main(args=None):
