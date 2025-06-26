@@ -98,7 +98,7 @@ class Navigator(Node):
 
 class PoseSchedulerStateMachine(Node):
     GOAL_TIMEOUT = 30  # seconds
-    LOW_HEALTH_THRESHOLD = 396
+    LOW_HEALTH_THRESHOLD = 150
 
     def __init__(self, navigator: Navigator):
         super().__init__('pose_scheduler_sm')
