@@ -1,3 +1,11 @@
+# Scanning field
+
+ros2 launch prm_autobot_2023 lidar_control_launch.py
+ros2 launch nav2_bringup navigation_launch.py
+ros2 launch slam_toolbox online_async_launch.py
+ros2 run rviz2 rviz2 -d /opt/ros/humble/share/nav2_bringup/rviz/nav2_default_view.rviz
+ros2 run nav2_map_server map_saver_cli -t /map -f <map_name>
+
 # nav2_bringup
 
 The `nav2_bringup` package is an example bringup system for Navigation2 applications.

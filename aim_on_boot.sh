@@ -4,7 +4,7 @@ SERVICE_NAME="ros2_aiming_service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
 
 # Paths
-USER_HOME="/home/purduerm"
+USER_HOME="/home/jason"
 LOG_DIR="$USER_HOME/auto_aim_logs"
 WRAPPER_SCRIPT="$USER_HOME/start_auto_aim.sh"
 
@@ -20,18 +20,18 @@ create_wrapper_script() {
 
 # Setup ROS environment
 source /opt/ros/humble/setup.bash
-source /home/purduerm/ros2-ws/install/setup.bash
+source /home/jason/ros2-ws/install/setup.bash
 
 # Sleep to give system time to stabilize
 sleep 5
 
 # Create log directory and log file
-LOG_DIR="/home/purduerm/auto_aim_logs"
+LOG_DIR="/home/jason/auto_aim_logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d_%H-%M-%S')_auto_aim_log.txt"
 
 # Change to workspace and exec Python script
-cd /home/purduerm/ros2-ws
+cd /home/jason/ros2-ws
 exec python3 auto-aiming/src/prm_autobot_2023/nav.py >> "$LOG_FILE" 2>&1
 EOF
 
@@ -51,8 +51,8 @@ After=network.target
 [Service]
 ExecStart=$WRAPPER_SCRIPT
 WorkingDirectory=$USER_HOME/ros2-ws
-User=purduerm
-Group=purduerm
+User=jason
+Group=jason
 Restart=always
 Environment=ROS_DISTRO=humble
 Environment=HOME=$USER_HOME

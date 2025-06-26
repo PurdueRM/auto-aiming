@@ -119,7 +119,7 @@ class PoseSchedulerStateMachine(Node):
         }
 
         self.pose_queue = {
-            1: "CENTER_ZONE",
+            5: "CENTER_ZONE",
             10: "CENTER_ZONE",
             20: "CENTER_ZONE",
             40: "CENTER_ZONE",
