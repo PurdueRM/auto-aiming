@@ -1,11 +1,12 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.15 #0.005 #0.2
-    alpha2: 0.10 #0.005 #0.2
-    alpha3: 0.10 #0.005 #0.2
-    alpha4: 0.15 #0.005 #0.2
-    alpha5: 0.10 #0.005 #0.2
+    # Noise levels for odom. Higher = trust lidar more.
+    alpha1: 0.15
+    alpha2: 0.10
+    alpha3: 0.10
+    alpha4: 0.15
+    alpha5: 0.10
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -21,24 +22,25 @@ amcl:
     max_particles: 1500
     min_particles: 500
     odom_frame_id: "odom"
-    pf_err: 0.1 #0.05
+    pf_err: 0.1
     pf_z: 0.99
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
     resample_interval: 1
     robot_model_type: "nav2_amcl::OmniMotionModel"
     save_pose_rate: 0.1
-    sigma_hit: 0.1 #0.2
+    sigma_hit: 0.1
     tf_broadcast: true
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25
-    z_hit: 0.9 #0.5
+    z_hit: 0.9
     z_max: 0.05
     z_rand: 0.1
     z_short: 0.05
     scan_topic: scan
     queue_size: 10
+    # Initial pose to localize at startup
     set_initial_pose: true
     initial_pose:
       x: 0.0
@@ -112,12 +114,13 @@ controller_server:
       movement_time_allowance: 60.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.4
-      yaw_goal_tolerance: 6.29 # 2pi = any yaw works
+      xy_goal_tolerance: 0.4 # Accept goal if within 0.4m
+      yaw_goal_tolerance: 6.29 # 2pi = Do not care about yaw
       stateful: True
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner" 
       debug_trajectory_details: True
+      # Theta vel/acc is set to 0, so only move in XY.
       min_vel_x: -3.7
       min_vel_y: -3.7
       min_vel_theta: 0.0
@@ -139,7 +142,7 @@ controller_server:
       vx_samples: 20
       vy_samples: 20
       vtheta_samples: 1
-      sim_time: 0.7 #1.7
+      sim_time: 0.7 # How far ahead to simulate robot's trajectory
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -147,6 +150,10 @@ controller_server:
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
+      # Critics are how DWB evaluates the robot's trajectory.
+      # They are used to score the trajectory and decide which one to follow.
+      # The higher the score, the more the critic impacts the trajectory.
+      # For example, if the PathDist critic has a high score, the robot will try to follow the path more closely.
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 25.0
       PathAlign.scale: 20.0
@@ -163,6 +170,7 @@ controller_server_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
+# Local costmap = lidar scan + inflation
 local_costmap:
   local_costmap:
     ros__parameters:
@@ -175,15 +183,14 @@ local_costmap:
       width: 12
       height: 12
       resolution: 0.05
-      #robot_radius: 0.22
       footprint: "[ [0.3, 0.3], [0.3, -0.3], [-0.3, -0.3], [-0.3, 0.3] ]"
       footprint_padding: 0.11
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.4
-      voxel_layer:
+        cost_scaling_factor: 3.0 # how fast the cost decreases with distance from an obstacle
+        inflation_radius: 0.4    # how big the "safety bubble" around an obstacle is
+      voxel_layer: 
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
         publish_voxel_map: True
@@ -210,6 +217,7 @@ local_costmap:
     ros__parameters:
       use_sim_time: True
 
+# Global costmap = pre-scanned map + inflation
 global_costmap:
   global_costmap:
     ros__parameters:
@@ -218,7 +226,6 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: True
-      #robot_radius: 0.22initialPoseReceived
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       obstacle_layer:
@@ -236,8 +243,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.45
+        cost_scaling_factor: 3.0 # how fast the cost decreases with distance from an obstacle
+        inflation_radius: 0.45   # how big the "safety bubble" around an obstacle is
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:

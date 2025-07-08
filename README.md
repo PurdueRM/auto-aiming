@@ -3,26 +3,37 @@ Revitalized auto-aiming suite for Purdue RoboMaster Club 2024-2025.
 
 ![build status](https://github.com/RoboMaster-Club/auto-aiming/actions/workflows/colcon-tests.yml/badge.svg)
 
-## Usage  
-Clone this repository into your `ros2-ws` directory. We provide a `run` script that can be used to build, run, test, and clean the workspace with no hassle. The script supports the following functionalities:
+## Brief Overview of the Suite
+### Auto-Aim
+Our auto-aiming system uses an industrial camera to detect enemy robots and launch shots at them accurately. Built in ROS2, the system is modular, with each step in the pipeline handled by separate nodes. First, it uses traditional computer vision techniques to detect an enemy robot’s armor plate, and uses `solvepnp` to estimate its 3D position relative to our camera. A ballistics solver then calculates the yaw and pitch angles needed to hit the target. Basic filtering is applied to reduce false positives, and the final aiming commands are sent to the robot's control board over UART.
+
+### Navigation
+Our navigation system enables the Sentry robot to autonomously move around the RoboMaster field, localize itself, and reach any spot on the map. Built using ROS2’s Nav2 framework, it combines LiDAR data and wheel odometry to localize via a method called AMCL. A custom behavior script `subscriber.py` controls where and when the robot moves, while the path planning plugin (DWB) computes obstacle-avoiding paths and issues movement commands. 
+
+### For more details on workings, issues, and possible improvements, see the [State of the Algorithm](https://docs.google.com/document/d/16-y6u_inBcsI0dOPOdocxniNRPu5UtawPmoyKMHaoPU/edit?usp=sharing)
+
+## Installation and Usage
+Clone this repository into your `~/ros2-ws` directory. We provide a `run` script that can be used to build, run, test, and clean the workspace with no hassle. The script supports the following functionalities:
 
 - **Building**
   - `./auto-aiming/run build`
-- **Launch ROS2 code**
+- **Run ROS2 code**
   - `./auto-aiming/run run <launch_file>`
-  - "launch files" basically run several ROS2 nodes at once. The main one is `video2detector.py`.
+    - "launch files" are how you start up the pipeline. For example you may use `video2detector.py` to run the auto-aiming pipeline with a video file, or `mv2control.py` to run using a real camera and send results to the STM32 control board.
 - **Run automated tests (GTest)**
   - `./auto-aiming/run test`
 - **Clean the workspace (remove build and install folders)**
   - `./auto-aiming/run clean`
 - _Optional flags_
   - `--quiet`: Suppresses console output, logs output to `command_output.log`.
-  - `--debug`: Builds with debug flags enabled. Used to display a detection results window and debug logs.
+  - `--debug`: Builds with debug flags enabled. When enabled, displays a detection results window and debug logs.
 
 ### Example to run the detector:
 ```
 ./auto-aiming/run --debug --quiet run video2detector.py
 ```
+
+### To run the navigation stack, please see the README in the `src/prm_autobot_2023` directory.
 
 ## Overall Suite Requirements
 ### Functional Requirements:
