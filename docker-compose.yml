@@ -1,0 +1,16 @@
+services:
+  ros2:
+    image: osrf/ros:foxy-desktop
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auto-aiming
+    network_mode: host
+    volumes:
+      - .:/auto_aiming
+      - ${HOME}/.Xauthority:/root/.Xauthority:rw
+    environment:
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=:0
+    tty: true    
+

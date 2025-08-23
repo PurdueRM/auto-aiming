@@ -148,23 +148,23 @@ float PitchLookupModel::get_offset(int distance, int height) {
  *
  * @param value   Value to be mapped
  * @param old_min The minimum of the old range
- * @param old_may The maximum of the old range
+ * @param old_max The maximum of the old range
  * @param new_min The minimum of the new range
- * @param new_may The maximum of the new range
+ * @param new_max The maximum of the new range
  *
  * @return Mapped value
  */
-float PitchLookupModel::map(float value, float old_min, float old_may, float new_min, float new_may) 
+float PitchLookupModel::map(float value, float old_min, float old_max, float new_min, float new_max) 
 {
-    if (old_min > old_may || new_min > new_may) {
+    if (old_min > old_max || new_min > new_max) {
         return -1;
     }
 
-    if (old_min == old_may) {
-        return (new_min == new_may) ? new_min : -1;
+    if (old_min == old_max) {
+        return (new_min == new_max) ? new_min : -1;
     }
 
-    return new_min + (value - old_min) * (new_may - new_min) / (old_may - old_min);
+    return new_min + (value - old_min) * (new_max - new_min) / (old_max - old_min);
 }
 
 void PitchLookupModel::print_to_file(std::string text) {
