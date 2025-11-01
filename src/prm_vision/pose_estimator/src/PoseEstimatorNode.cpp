@@ -1,5 +1,5 @@
 #include "PoseEstimatorNode.hpp"
-
+#include 
 PoseEstimatorNode::PoseEstimatorNode(const rclcpp::NodeOptions &options) : Node("pose_estimator", options)
 {
     RCLCPP_INFO(get_logger(), "PoseEstimatorNode has been started.");
@@ -117,6 +117,15 @@ rcl_interfaces::msg::SetParametersResult PoseEstimatorNode::parameters_callback(
     }
 
     return result;
+}
+
+//Where I will implement the function
+//If function uses something, declare as a parameter in the header file
+//One vector as translation and one as rotation
+void PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double> rotation_us, vector<double> translation_enemy, vector<double> rotation_enemy)
+{
+    double x, y, z = 0, 0 ,0;
+    // Implementation goes here
 }
 
 void PoseEstimatorNode::keyPointsCallback(const vision_msgs::msg::KeyPoints::SharedPtr key_points_msg)
