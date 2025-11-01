@@ -126,6 +126,28 @@ void PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double
 {
     double x, y, z = 0, 0 ,0;
     // Implementation goes here
+
+    //THIS PART IS FOR THIS ROBOT
+    //conver rotation vect to quaterion
+    tf2::Quaternion q;
+    q.setRPY(rotation_us[0], rotation_us[1], rotation_us[2]);
+    // convert translation_us and rotation_us to tf2::Transform
+    //this is our robot's pose in the world
+    tf2::Transform transformUs;
+    transformUs.setOrigin(tf2::Vector3(translation_us[0], translation_us[1], translation_us[2]));
+    transformUs.setRotation(q);
+
+    // THIS PART IS FOR THE ENEMY
+    //conver rotation vect to quaterion
+    tf2::Quaternion q;
+    q.setRPY(rotation_enemy[0], rotation_enemy[1], rotation_enemy[2]);
+    // convert translation_us and rotation_us to tf2::Transform
+    //this is our robot's pose in the world
+    tf2::Transform transformEnemy;
+    transformEnemy.setOrigin(tf2::Vector3(translation_enemy[0], translation_enemy[1], translation_enemy[2]));
+    transformEnemy.setRotation(q);
+
+
 }
 
 void PoseEstimatorNode::keyPointsCallback(const vision_msgs::msg::KeyPoints::SharedPtr key_points_msg)
@@ -136,7 +158,8 @@ void PoseEstimatorNode::keyPointsCallback(const vision_msgs::msg::KeyPoints::Sha
         publishZeroPredictedArmor(key_points_msg->header, "NO_ARMOR");
         return;
     }
-
+    std::
+    //translation and rotation vector of armor plate for enemy
     cv::Mat tvec, rvec;
     bool reset_kalman = false;
     std::string new_auto_aim_status;
