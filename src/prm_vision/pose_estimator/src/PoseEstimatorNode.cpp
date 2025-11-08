@@ -147,7 +147,9 @@ void PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double
     transformEnemy.setOrigin(tf2::Vector3(translation_enemy[0], translation_enemy[1], translation_enemy[2]));
     transformEnemy.setRotation(q);
 
-
+    // combine the transformation
+    tf2::Transform newTransform = transformUs * transformEnemy;
+    
 }
 
 void PoseEstimatorNode::keyPointsCallback(const vision_msgs::msg::KeyPoints::SharedPtr key_points_msg)
