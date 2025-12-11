@@ -102,6 +102,7 @@ void OpenCVArmorDetectorNode::imageCallback(
 
   // Call the detector's search method with both HSV ranges
   std::vector<_Float32> points = detector->search(frame);
+  std::aruco::ArucoDetector detector = detectMarkers(frame, 4);
 
   // Prep the message to be published
   vision_msgs::msg::KeyPoints keypoints_msg;

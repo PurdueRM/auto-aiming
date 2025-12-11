@@ -3,8 +3,10 @@
 
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include <opencv2/aruco.hpp>
 #include <stdio.h>
 #include <math.h>
+#include <ros2.h>
 
 // Detector Constants
 #define LIGHT_BAR_ANGLE_LIMIT 10.0

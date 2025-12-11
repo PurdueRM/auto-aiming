@@ -1,4 +1,4 @@
-#include "OpenCVArmorDetector.h"
+﻿#include "OpenCVArmorDetector.h"
 
 void OpenCVArmorDetector::setConfig(DetectorConfig config)
 {
@@ -340,4 +340,55 @@ std::vector<cv::Point2f> OpenCVArmorDetector::rectToPoint(cv::RotatedRect &rect)
     points.push_back(cv::Point2f(int(rect.center.x + x_offset), int(rect.center.y - y_offset)));
     points.push_back(cv::Point2f(int(rect.center.x - x_offset), int(rect.center.y + y_offset)));
     return points;
+}
+
+std::vector<cv::Mat> OpenCVArmorDetector::pdfToMats(const std::string& pdfPath, int dpi = 300) {
+    std::vector<cv::Mat> pages;
+
+    std::unique_ptr<poppler::document> doc(poppler::document::load_from_file(pdfPath));
+    if (!doc) {
+        throw std::runtime_error("Failed to load PDF");
+    }
+
+    int numPages = doc->pages();
+    pages.reserve(numPages);
+
+    for (int i = 0; i < numPages; i++) {
+        std::unique_ptr<poppler::page> p(doc->create_page(i));
+        if (!p) continue;
+
+        poppler::page_renderer renderer;
+        renderer.set_render_hint(poppler::page_renderer::antialiasing, true);
+        renderer.set_render_hint(poppler::page_renderer::text_antialiasing, true);
+
+        poppler::image img = renderer.render_page(p.get(), dpi, dpi);
+
+        cv::Mat pageMat(img.height(), img.width(), CV_8UC4,
+                        (void*)img.data(), img.bytes_per_row());
+        cv::Mat pageBGR;
+        cv::cvtColor(pageMat, pageBGR, cv::COLOR_RGBA2BGR);
+
+        pages.push_back(pageBGR.clone());
+    }
+
+    return pages;
+}
+
+cv::aruco::ArucoDetector OpenCVArmorDetector::detectMarkers(cv::mat inputImage, int markerSize) {
+    std::vector<cv::Mat> fiducial_markers = pdfToMats("fiducial_markers.pdf"); 
+    cv::Ptr<cv::aruco::Dictionary> customDictionary = 
+    cv::aruco::generateCustomDictionary(fiducial_markers.size(), markerSize);
+
+    for(cv::Mat markerbits: fiducial_markers) {
+        customDictionary->bytesList.push_back(markerbits);
+    }
+    std::vector<int> markerIds;
+    std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
+    cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
+    cv::aruco::ArucoDetector detector(customDictionary, detectorParams);
+    detector.detectMarkers(inputImage, markerCorners, markerIds, rejectedCandidates);
+    //rclcpp::Node()
+    return detector;
+
+
 }
