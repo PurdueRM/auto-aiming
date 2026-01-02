@@ -3,6 +3,23 @@ Revitalized auto-aiming suite for Purdue RoboMaster Club 2024-2025.
 
 ![build status](https://github.com/RoboMaster-Club/auto-aiming/actions/workflows/colcon-tests.yml/badge.svg)
 
+## Install/Setup Instructions
+This repository is designed to run on an NVIDIA Jetson Orin platform
+
+Install ros2
+
+Make sure you source your ros2 workspace
+`source /opt/ros/humble/setup.bash`
+
+Install the `camera_info_manager` package
+`sudo apt install ros-humble-camera-info-manager`
+
+Install the Mindvision Hikrobot SDK
+```
+cd ./autoaiming/src/prm_camera/mv_publisher/sdk
+sudo ./install.sh
+```
+
 ## Usage  
 Clone this repository into your `ros2-ws` directory. We provide a `run` script that can be used to build, run, test, and clean the workspace with no hassle. The script supports the following functionalities:
 
