@@ -9,9 +9,11 @@ This repository is designed to run on an NVIDIA Jetson Orin platform
 Install ros2
 
 Make sure you source your ros2 workspace
+
 `source /opt/ros/humble/setup.bash`
 
 Install the `camera_info_manager` package
+
 `sudo apt install ros-humble-camera-info-manager`
 
 Install the Mindvision Hikrobot SDK
