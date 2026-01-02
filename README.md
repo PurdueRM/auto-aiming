@@ -8,7 +8,7 @@ This repository is designed to run on an NVIDIA Jetson Orin platform
 
 Install ros2
 
-Make sure you source your ros2 workspace
+Make sure you source your ros2 environment
 ```
 source /opt/ros/humble/setup.bash
 ```
