@@ -32,7 +32,7 @@ LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d_%H-%M-%S')_auto_aim_log.txt"
 
 # Change to workspace and exec Python script
 cd /home/jason/ros2-ws
-exec python3 auto-aiming/src/prm_autobot_2023/nav.py >> "$LOG_FILE" 2>&1
+exec ros2 launch prm_launch mv2control.py >> "$LOG_FILE" 2>&1
 EOF
 
     chmod +x "$WRAPPER_SCRIPT"

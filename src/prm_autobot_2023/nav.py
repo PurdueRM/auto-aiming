@@ -104,6 +104,11 @@ def kill_processes(kill_string):
                 print("  [x] Failed to kill process")
 
 def main():
+    if (subprocess.run("lsusb | grep MindVision | grep 'Bus 002'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode):
+        print("Camera on low speed bus\n") 
+    else:
+        print("Camera on high speed bus\n")    
+
     run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Init lds lidar fail!", "Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
 
 

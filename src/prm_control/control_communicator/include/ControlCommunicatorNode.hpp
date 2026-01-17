@@ -51,9 +51,10 @@ private:
 	bool is_match_running = 0;
 	bool in_resupply_zone = 0;
 	bool in_center_zone = 0;
-	float pitch = 0;	 // rad
-	float pitch_vel = 0; // rad/s
-	float yaw_vel = 0;	 // rad/s
+	float pitch = 0;	 	// rad
+	float pitch_vel = 0; 	// rad/s
+	float yaw_vel = 0;	 	// rad/s
+	float orientation = 0;  // rad
 
 	bool valid_read = false;
 	std::string old_target_robot_color; 

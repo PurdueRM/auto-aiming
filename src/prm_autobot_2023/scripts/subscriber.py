@@ -113,25 +113,28 @@ class PoseSchedulerStateMachine(Node):
         self.current_pose_name = None
         self.current_pose_start_time = None
 
+        self.new_health = None
+
         self.named_poses = {
-            "HOME": self._make_pose([0.0, 0.0]),
-            "CENTER_ZONE": self._make_pose([2.0, 5.0])
+            "HOME": self._make_pose([4.57, 7.92]),
+            "CENTER_ZONE": self._make_pose([8.47, 8.56])
         }
 
         self.pose_queue = {
             5: "CENTER_ZONE",
-            10: "CENTER_ZONE",
-            20: "CENTER_ZONE",
-            40: "CENTER_ZONE",
+            15: "HOME",
+            30: "CENTER_ZONE",
+            45: "HOME",
             60: "CENTER_ZONE",
-            80: "CENTER_ZONE",
-            100: "CENTER_ZONE",
+            75: "HOME",
+            90: "CENTER_ZONE",
+            105: "HOME",
             120: "CENTER_ZONE",
-            140: "CENTER_ZONE",
-            160: "CENTER_ZONE",
+            135: "HOME",
+            150: "CENTER_ZONE",
+            165: "HOME",
             180: "CENTER_ZONE",
-            200: "CENTER_ZONE",
-            220: "CENTER_ZONE",
+            195: "HOME",
         }
 
         self.override_pose_name = "HOME"
@@ -162,9 +165,22 @@ class PoseSchedulerStateMachine(Node):
             self.match_started = True
             self.start_time = time.time()
 
+            # # a little bit of messing around
+            # # Republish initial pose at x:0.0, y:0.0, z:0.0, yaw:1.6
+            # initial_pose = PoseWithCovarianceStamped()
+            # initial_pose.header.frame_id = 'map'
+            # initial_pose.pose.pose.position.x = 6.0
+            # initial_pose.pose.pose.position.y = 7.2
+            # initial_pose.pose.pose.position.z = 0.0
+            # # Convert yaw to quaternion
+            # yaw = -0.5
+            # initial_pose.pose.pose.orientation.z = math.sin(yaw / 2)
+            # initial_pose.pose.pose.orientation.w = math.cos(yaw / 2)
+            # self.navigator.set_initial_pose(initial_pose)
+
     def _health_cb(self, msg):
-        new_health = msg.data
-        self.low_health = new_health < self.LOW_HEALTH_THRESHOLD
+        self.new_health = msg.data
+        self.low_health = self.new_health < self.LOW_HEALTH_THRESHOLD
 
     def _tick(self):
         if not self.match_started:
@@ -196,7 +212,7 @@ class PoseSchedulerStateMachine(Node):
             return
 
         # If we just exited override
-        if self.state == 'OVERRIDE' and not self.low_health:
+        if self.state == 'OVERRIDE' and not self.low_health and self.new_health > 370:
             self.get_logger().info("Exiting LOW HEALTH OVERRIDE, resuming schedule")
             self.state = 'NAVIGATING'
             self.current_pose_start_time = None

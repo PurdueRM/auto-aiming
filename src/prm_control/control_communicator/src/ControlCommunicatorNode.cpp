@@ -209,13 +209,14 @@ void ControlCommunicatorNode::read_uart()
 	this->pitch = package.pitch;					   // rad
 	this->pitch_vel = package.pitch_vel;			   // rad/s
 	this->yaw_vel = package.yaw_vel;				   // rad/s
+	this->orientation = package.orientation;		   // rad
 	this->valid_read = true;
 
-	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
-						 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
-						 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
-						 package.pitch, package.pitch_vel, package.yaw_vel,
-						 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
+	// RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+	// 					 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
+	// 					 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
+	// 					 package.pitch, package.pitch_vel, package.yaw_vel,
+	// 					 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
 
 	///////////////////////////////
 	// Publishers for match data //
@@ -292,7 +293,7 @@ void ControlCommunicatorNode::read_uart()
 	odom.pose.pose.position.z = 0;
 
 	tf2::Quaternion odom_q;
-	odom_q.setRPY(0, 0, package.orientation);
+	odom_q.setRPY(0, 0, this->orientation);
 
 	odom_tf.transform.rotation.x = odom_q.x();
 	odom_tf.transform.rotation.y = odom_q.y();
@@ -328,6 +329,24 @@ void ControlCommunicatorNode::read_uart()
 	tf_broadcaster->sendTransform(odom_tf);
 
 	this->odometry_publisher->publish(odom);
+
+	geometry_msgs::msg::TransformStamped gimbal_tf;
+
+	gimbal_tf.header.stamp = curr_time;
+	gimbal_tf.header.frame_id = "base_link";
+	gimbal_tf.child_frame_id = "lidar_link";
+	gimbal_tf.transform.translation.x = 0;
+	gimbal_tf.transform.translation.y = 0;
+	gimbal_tf.transform.translation.z = 0;
+
+	tf2::Quaternion gimbal_q;
+	gimbal_q.setRPY(0, 0, this->orientation);
+	gimbal_tf.transform.rotation.x = gimbal_q.x();
+	gimbal_tf.transform.rotation.y = gimbal_q.y();
+	gimbal_tf.transform.rotation.z = gimbal_q.z();
+	gimbal_tf.transform.rotation.w = gimbal_q.w();
+
+	tf_broadcaster->sendTransform(gimbal_tf);
 
 	return;
 }

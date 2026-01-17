@@ -11,7 +11,7 @@
   </link>
 
   <joint name="base_link_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+    <origin xyz="0.0 0.0 0.132" rpy="0 0 0" />
     <parent link="base_footprint"/>
     <child link="base_link" />
   </joint>
@@ -60,11 +60,12 @@
       </geometry>
     </visual>
   </link>
-    
-  <joint name="lidar_joint" type="fixed">
+  <!-- we could change type continuous -->
+  <joint name="lidar_joint" type="continuous">
     <parent link="base_link"/>
     <child link="lidar_link"/>
-    <origin xyz="0.0 0.0 0.1" rpy="0 0 0"/>
+    <origin xyz="0.191 0.0 0.524" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
   </joint>
     
   <gazebo reference="lidar_link">
