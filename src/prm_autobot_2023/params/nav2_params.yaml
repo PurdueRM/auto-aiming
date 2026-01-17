@@ -21,24 +21,25 @@ amcl:
     max_particles: 1500
     min_particles: 500
     odom_frame_id: "odom"
-    pf_err: 0.1 #0.05
+    pf_err: 0.1
     pf_z: 0.99
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
     resample_interval: 1
     robot_model_type: "nav2_amcl::OmniMotionModel"
     save_pose_rate: 0.1
-    sigma_hit: 0.1 #0.2
+    sigma_hit: 0.1
     tf_broadcast: true
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25
-    z_hit: 0.9 #0.5
+    z_hit: 0.9
     z_max: 0.05
     z_rand: 0.1
     z_short: 0.05
     scan_topic: scan
     queue_size: 10
+    # Initial pose to localize at startup
     set_initial_pose: true
     initial_pose:
       x: 4.57
@@ -112,8 +113,8 @@ controller_server:
       movement_time_allowance: 30.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.4
-      yaw_goal_tolerance: 6.29 # 2pi = any yaw works
+      xy_goal_tolerance: 0.4 # Accept goal if within 0.4m
+      yaw_goal_tolerance: 6.29 # 2pi = Do not care about yaw
       stateful: True
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner" 
@@ -147,6 +148,10 @@ controller_server:
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
+      # Critics are how DWB evaluates the robot's trajectory.
+      # They are used to score the trajectory and decide which one to follow.
+      # The higher the score, the more the critic impacts the trajectory.
+      # For example, if the PathDist critic has a high score, the robot will try to follow the path more closely.
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.02 # 1.0 # 1.2
       PathAlign.scale: 32.0 # 64.0
@@ -163,6 +168,7 @@ controller_server_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
+# Local costmap = lidar scan + inflation
 local_costmap:
   local_costmap:
     ros__parameters:
@@ -210,6 +216,7 @@ local_costmap:
     ros__parameters:
       use_sim_time: True
 
+# Global costmap = pre-scanned map + inflation
 global_costmap:
   global_costmap:
     ros__parameters:
@@ -218,7 +225,6 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: True
-      #robot_radius: 0.22initialPoseReceived
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       obstacle_layer:
