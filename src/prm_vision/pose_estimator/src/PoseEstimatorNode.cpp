@@ -1,5 +1,6 @@
 #include "PoseEstimatorNode.hpp"
-#include 
+
+using namespace std;
 PoseEstimatorNode::PoseEstimatorNode(const rclcpp::NodeOptions &options) : Node("pose_estimator", options)
 {
     RCLCPP_INFO(get_logger(), "PoseEstimatorNode has been started.");
@@ -122,11 +123,9 @@ rcl_interfaces::msg::SetParametersResult PoseEstimatorNode::parameters_callback(
 //Where I will implement the function
 //If function uses something, declare as a parameter in the header file
 //One vector as translation and one as rotation
-void PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double> rotation_us, vector<double> translation_enemy, vector<double> rotation_enemy)
+tf2::Transform PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double> rotation_us, vector<double> translation_enemy, vector<double> rotation_enemy)
 {
-    double x, y, z = 0, 0 ,0;
     // Implementation goes here
-
     //THIS PART IS FOR THIS ROBOT
     //conver rotation vect to quaterion
     tf2::Quaternion q;
@@ -149,7 +148,11 @@ void PoseEstimatorNode::worldCoords(vector<double> translation_us, vector<double
 
     // combine the transformation
     tf2::Transform newTransform = transformUs * transformEnemy;
-    
+    RCLCPP_INFO(this->get_logger(), "Parameter '_num_frames_to_fire_after' updated to: %d", newTransform.getOrigin().x());
+    RCLCPP_INFO(this->get_logger(), "Parameter '_num_frames_to_fire_after' updated to: %d", newTransform.getOrigin().y());
+    RCLCPP_INFO(this->get_logger(), "Parameter '_num_frames_to_fire_after' updated to: %d", newTransform.getOrigin().z());
+
+    return newTransform;
 }
 
 void PoseEstimatorNode::keyPointsCallback(const vision_msgs::msg::KeyPoints::SharedPtr key_points_msg)
