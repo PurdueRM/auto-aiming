@@ -44,7 +44,23 @@ bool ControlCommunicator::start_uart_connection(const char *port)
     return true;
 }
 
-void ControlCommunicator::compute_aim(float bullet_speed, float target_x, float target_y, float target_z, float &yaw, float &pitch)
+int ControlCommunicator::aim(float aim_bullet_speed, float x, float y, float z, float &yaw, float &pitch, bool &impossible)
+{
+	this->compute_aim(aim_bullet_speed, x, y, z, yaw, pitch, impossible);
+
+	PackageOut package;
+	package.frame_id = 0xAA;
+	package.frame_type = FRAME_TYPE_AUTO_AIM;
+	package.autoAimPackage.yaw = yaw;
+	package.autoAimPackage.pitch = pitch;
+	package.autoAimPackage.fire = 1;
+
+	int bytes_written = write(this->port_fd, &package, sizeof(PackageOut));
+	fsync(this->port_fd);
+    return bytes_written;
+}
+
+void ControlCommunicator::compute_aim(float bullet_speed, float target_x, float target_y, float target_z, float &yaw, float &pitch, bool &impossible)
 {
     // if X and Y and Z are 0
     if (target_x == 0 && target_y == 0 && target_z == 0)
@@ -55,7 +71,6 @@ void ControlCommunicator::compute_aim(float bullet_speed, float target_x, float 
     }
 
     // projectile model based on quartic solver
-    bool impossible = false;
     double p;
     double y;
     pitch_yaw_gravity_model_movingtarget_const_v({ target_z, target_x, -target_y }, {0, 0, 0}, {0, 0, 9810}, 0.0, &p, &y, &impossible);

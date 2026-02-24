@@ -16,7 +16,8 @@ public:
     ~ControlCommunicator() {}
 
     // Class methods
-    void compute_aim(float bullet_speed, float target_x, float target_y, float target_z, float &yaw, float &pitch);
+    int aim(float bullet_speed, float target_x, float target_y, float target_z, float &yaw, float &pitch, bool &impossible);
+    void compute_aim(float bullet_speed, float target_x, float target_y, float target_z, float &yaw, float &pitch, bool &impossible);
     bool start_uart_connection(const char *port);
     bool read_uart(int port_fd, PackageIn &package, const char *port);
 

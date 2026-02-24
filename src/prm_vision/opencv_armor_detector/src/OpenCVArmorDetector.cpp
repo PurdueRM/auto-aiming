@@ -285,13 +285,6 @@ bool OpenCVArmorDetector::isArmor(cv::RotatedRect &left_rect, cv::RotatedRect &r
         return false;
     }
 
-    // Distance Check
-    float distance = cv::norm(left_rect.center - right_rect.center);
-    if (distance < left_rect.size.height || distance > 5 * left_rect.size.height)
-    {
-        return false;
-    }
-
     // X Position distance Check
     if (std::abs(left_rect.center.x - right_rect.center.x) < left_rect.size.width)
     {

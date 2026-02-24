@@ -68,29 +68,28 @@ void ControlCommunicatorNode::publish_static_tf(float x, float y, float z, float
 
 void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs::msg::PredictedArmor> msg)
 {	
+	// Timing to monitor for degradation in performance
+	static rclcpp::Time last_time = this->now();
+	static int degraded_perf_count = 0;
+	rclcpp::Time curr_time = this->now();
+
 	if (!control_communicator->is_connected || control_communicator->port_fd < 0)
 	{
 		RCLCPP_WARN(this->get_logger(), "UART Not connected, ignoring aim message.");
 		return;
 	}
 
-	float yaw, pitch;
-	control_communicator->compute_aim(aim_bullet_speed, msg->x, msg->y, msg->z, yaw, pitch);
-
-	PackageOut package;
-	package.frame_id = 0xAA;
-	package.frame_type = FRAME_TYPE_AUTO_AIM;
-	package.autoAimPackage.yaw = yaw;
-	package.autoAimPackage.pitch = pitch;
-	package.autoAimPackage.fire = 1;
-
-	int bytes_written = write(control_communicator->port_fd, &package, sizeof(PackageOut));
-	fsync(control_communicator->port_fd);
+	// Compute yaw/pitch and send over UART
+	float yaw;
+	float pitch;
+	bool impossible;
+	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, yaw, pitch, impossible);
+	bool AIMING = (msg->x != 0 || msg->y != 0 || msg->z != 0);
 
 	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
 	{
 		float dst = sqrt(pow(msg->x, 2) + pow(msg->y, 2) + pow(msg->z, 2));
-		RCLCPP_INFO(this->get_logger(), "Yaw: %.2f | Pitch: %.2f | dst: %.2f | (x, y, z): (%.2f, %.2f, %.2f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
+		RCLCPP_INFO(this->get_logger(), "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
 	}
 	
 	if (bytes_written != sizeof(PackageOut))
@@ -100,6 +99,29 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 	}
 
 	auto_aim_frame_id++;
+
+	// check performance for degradation in sending frequency
+	rclcpp::Duration elapsed_time = curr_time - last_time;
+	last_time = curr_time;
+	float TARGET_FREQUENCY = 90.0; // Hz
+	float TARGET_PERIOD = 1 / TARGET_FREQUENCY; // seconds
+
+	if (degraded_perf_count > 50 && AIMING)
+	{
+		RCLCPP_WARN(this->get_logger(), "DEGRADED PERFORMANCE DETECTED - AUTO-AIM SEND FREQUENCY: [%0.1f Hz]", 1 / elapsed_time.seconds());
+		degraded_perf_count = 0;
+	}
+	else if (this->auto_aim_frame_id % 1000 == 0)
+	{
+		RCLCPP_INFO(this->get_logger(), "Auto-Aim send frequency: [%0.1f Hz]", 1 / elapsed_time.seconds());
+	}
+	if (elapsed_time.seconds() > TARGET_PERIOD && AIMING)
+	{
+		degraded_perf_count++;	
+	}
+	else {
+		degraded_perf_count = 0;
+	}
 }
 
 void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::msg::Twist> msg)
