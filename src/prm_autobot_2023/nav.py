@@ -39,7 +39,8 @@ def run_command(command, success_strings, failure_strings, kill_strings, num_che
                     print("  [x] FAILURE string found")
 
                     # see if it's a process has died and reset eth
-                    if "Init lds lidar fail!" in line or "Message Filter dropping message" in line or "frame ID \"map\" passed to canTransform argument" in line:
+                    # "Message Filter dropping message" in line or 
+                    if "Init lds lidar fail!" in line or "frame ID \"map\" passed to canTransform argument" in line:
                         print("  [x] LiDAR Fail detected. Resetting ETH devices...")
                         try:
                             subprocess.run("echo purdueRM2023 | sudo -S systemctl restart NetworkManager", shell=True, check=True)
@@ -109,7 +110,8 @@ def main():
     else:
         print("Camera on high speed bus\n")    
 
-    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Init lds lidar fail!", "Message Filter dropping message: frame 'odom'", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 5)
+    #  "Message Filter dropping message: frame 'odom'", 
+    run("ros2 launch prm_autobot_2023 autobot_launch.py", ["[pose_scheduler_sm]: Publishing"], ["Init lds lidar fail!", "Bad Odom read", "process has died", "Please set the initial pose"], ["ros2", "mv2pnp.py", "livox", "MVCameraNode", "OpenCVArmorDete", "PNPSolverNode", "subscriber.py", "autobot_launch.py", "waypoint_follow", "recoveries_serv", "bt_navigator", "controller_serv", "planner_server", "lifecycle_manag", "amcl", "map_server", "rviz2", "ScanLimitNode", "rplidar"], 1)
 
 
     print("Navigation startup completed.")

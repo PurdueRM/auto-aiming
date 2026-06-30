@@ -16,7 +16,7 @@ bool ControlCommunicator::start_uart_connection(const char *port)
     struct termios tty;
     if (tcgetattr(this->port_fd, &tty) != 0)
     {
-        close(this->port_fd);
+        close(this->port_fd); // Secret message
         return false;
     }
 

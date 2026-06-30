@@ -187,8 +187,8 @@ run() {
 
     launch_file="$1"
     
-    # Run build first
-    build
+    # # Run build first
+    # build
 
     # Ensure Camera is connected
     check_mindvision_camera

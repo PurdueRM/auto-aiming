@@ -115,6 +115,7 @@ class PoseSchedulerStateMachine(Node):
 
         self.new_health = None
 
+        # CHANGE BASED ON MAP
         self.named_poses = {
             "HOME": self._make_pose([4.57, 7.92]),
             "CENTER_ZONE": self._make_pose([8.47, 8.56])

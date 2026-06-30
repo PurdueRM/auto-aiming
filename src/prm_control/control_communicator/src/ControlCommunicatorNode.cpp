@@ -26,7 +26,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	publish_static_tf(158.7f / 1000.f, 0.f / 1000.f, 47.5 / 1000.f, 0, 0, 0, "pitch_link", "camera_link");
 	publish_static_tf(0, 0, 478.f / 1000.f, 0, 0, 0, "base_link", "yaw_link");
 	publish_static_tf(0, 0, 0, 0, 0, 0, "base_footprint", "base_link");
-	publish_static_tf(0.20, 0, 0.65, 0, 0, 0, "base_link", "laser");
+	publish_static_tf(0.19, 0, 0.52, 0, 0, 0, "base_link", "laser"); 
 
 	this->heart_beat_timer = this->create_wall_timer(1000ms, std::bind(&ControlCommunicatorNode::heart_beat_handler, this));
 	this->auto_aim_subscriber = this->create_subscription<vision_msgs::msg::PredictedArmor>(
@@ -198,6 +198,11 @@ void ControlCommunicatorNode::read_uart()
 		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read failed or misaligned.");
 		return;
 	}
+	else {
+		
+		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read succeeded!!!");
+
+	}
 
 	rclcpp::Time curr_time = this->now();
 
@@ -212,11 +217,11 @@ void ControlCommunicatorNode::read_uart()
 	this->orientation = package.orientation;		   // rad
 	this->valid_read = true;
 
-	// RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-	// 					 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
-	// 					 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
-	// 					 package.pitch, package.pitch_vel, package.yaw_vel,
-	// 					 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+						 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
+						 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
+						 package.pitch, package.pitch_vel, package.yaw_vel,
+						 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
 
 	///////////////////////////////
 	// Publishers for match data //
@@ -330,23 +335,23 @@ void ControlCommunicatorNode::read_uart()
 
 	this->odometry_publisher->publish(odom);
 
-	geometry_msgs::msg::TransformStamped gimbal_tf;
+	// geometry_msgs::msg::TransformStamped gimbal_tf;
 
-	gimbal_tf.header.stamp = curr_time;
-	gimbal_tf.header.frame_id = "base_link";
-	gimbal_tf.child_frame_id = "lidar_link";
-	gimbal_tf.transform.translation.x = 0;
-	gimbal_tf.transform.translation.y = 0;
-	gimbal_tf.transform.translation.z = 0;
+	// gimbal_tf.header.stamp = curr_time;
+	// gimbal_tf.header.frame_id = "base_link";
+	// gimbal_tf.child_frame_id = "lidar_link";
+	// gimbal_tf.transform.translation.x = 0;
+	// gimbal_tf.transform.translation.y = 0;
+	// gimbal_tf.transform.translation.z = 0;
 
-	tf2::Quaternion gimbal_q;
-	gimbal_q.setRPY(0, 0, this->orientation);
-	gimbal_tf.transform.rotation.x = gimbal_q.x();
-	gimbal_tf.transform.rotation.y = gimbal_q.y();
-	gimbal_tf.transform.rotation.z = gimbal_q.z();
-	gimbal_tf.transform.rotation.w = gimbal_q.w();
+	// tf2::Quaternion gimbal_q;
+	// gimbal_q.setRPY(0, 0, 0);
+	// gimbal_tf.transform.rotation.x = gimbal_q.x();
+	// gimbal_tf.transform.rotation.y = gimbal_q.y();
+	// gimbal_tf.transform.rotation.z = gimbal_q.z();
+	// gimbal_tf.transform.rotation.w = gimbal_q.w();
 
-	tf_broadcaster->sendTransform(gimbal_tf);
+	// tf_broadcaster->sendTransform(gimbal_tf);
 
 	return;
 }

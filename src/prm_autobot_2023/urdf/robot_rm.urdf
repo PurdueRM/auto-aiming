@@ -60,14 +60,13 @@
       </geometry>
     </visual>
   </link>
-  <!-- we could change type continuous -->
-  <joint name="lidar_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="lidar_link"/>
-    <origin xyz="0.191 0.0 0.524" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-  </joint>
-    
+  <!--
+    <joint name="lidar_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="lidar_link"/>
+      <origin xyz="0.191 0.0 0.524" rpy="0 0 0"/>
+    </joint>
+  -->
   <gazebo reference="lidar_link">
     <sensor name="lidar" type="ray">
       <always_on>true</always_on>
