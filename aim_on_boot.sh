@@ -19,8 +19,10 @@ create_wrapper_script() {
 #!/bin/bash
 
 # Setup ROS environment
+# source /home/jason/ros2-ws/install/setup.bash
+
 source /opt/ros/humble/setup.bash
-source /home/jason/ros2-ws/install/setup.bash
+source /home/jason/ros2-ws/install/setup.sh
 
 # Sleep to give system time to stabilize
 sleep 5
