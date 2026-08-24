@@ -3,17 +3,27 @@ Revitalized auto-aiming suite for Purdue RoboMaster Club 2024-2025.
 
 ![build status](https://github.com/RoboMaster-Club/auto-aiming/actions/workflows/colcon-tests.yml/badge.svg)
 
-## Brief Overview of the Suite
-### Auto-Aim
-Our auto-aiming system uses an industrial camera to detect enemy robots and launch shots at them accurately. Built in ROS2, the system is modular, with each step in the pipeline handled by separate nodes. First, it uses traditional computer vision techniques to detect an enemy robot’s armor plate, and uses `solvepnp` to estimate its 3D position relative to our camera. A ballistics solver then calculates the yaw and pitch angles needed to hit the target. Basic filtering is applied to reduce false positives, and the final aiming commands are sent to the robot's control board over UART.
+## Install/Setup Instructions
+This repository is designed to run on an NVIDIA Jetson Orin platform
 
-### Navigation
-Our navigation system enables the Sentry robot to autonomously move around the RoboMaster field, localize itself, and reach any spot on the map. Built using ROS2’s Nav2 framework, it combines LiDAR data and wheel odometry to localize via a method called AMCL. A custom behavior script `subscriber.py` controls where and when the robot moves, while the path planning plugin (DWB) computes obstacle-avoiding paths and issues movement commands. 
+Install ros2
 
-### For more details on workings, issues, and possible improvements, see the [State of the Algorithm](https://docs.google.com/document/d/16-y6u_inBcsI0dOPOdocxniNRPu5UtawPmoyKMHaoPU/edit?usp=sharing)
+Make sure you source your ros2 environment
+```
+source /opt/ros/humble/setup.bash
+```
+Install the `camera_info_manager` package
+```
+sudo apt install ros-humble-camera-info-manager
+```
+Install the Mindvision Hikrobot SDK
+```
+cd ./autoaiming/src/prm_camera/mv_publisher/sdk
+sudo ./install.sh
+```
 
-## Installation and Usage
-Clone this repository into your `~/ros2-ws` directory. We provide a `run` script that can be used to build, run, test, and clean the workspace with no hassle. The script supports the following functionalities:
+## Usage  
+Clone this repository into your `ros2-ws` directory. We provide a `run` script that can be used to build, run, test, and clean the workspace with no hassle. The script supports the following functionalities:
 
 - **Building**
   - `./auto-aiming/run build`
