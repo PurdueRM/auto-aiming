@@ -1,0 +1,1 @@
+The Robomaster_Arena and ground_plane files need to be placed in the .gazebo/models file for the simulation to load properly

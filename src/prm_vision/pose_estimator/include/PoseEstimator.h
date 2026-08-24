@@ -43,13 +43,13 @@ private:
 
     // Class variables
     int _consecutive_tracking_frames_ctr = 0;
-    int _num_frames_to_fire_after = 3;
+    int _num_frames_to_fire_after = 1;
     int _allowed_missed_frames_before_no_fire = 150;
     int _remaining_missed_frames_before_no_fire = 0; // Gets reset when we have a valid pose estimate
     std::chrono::time_point<std::chrono::system_clock> _last_fire_time;
 
     // Validity filter parameters
-    int _lock_in_after = 3;
+    int _lock_in_after = 2;
     float _max_distance = 10000;
     float _min_distance = 10;
     float _max_shift_distance = 150;

@@ -11,6 +11,7 @@
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int16.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2/transform_datatypes.h"
@@ -39,17 +40,22 @@ public:
 private:
 	void publish_static_tf(float x, float y, float z, float roll, float pitch, float yaw, const char *frame_id, const char *child_frame_id);
 	void heart_beat_handler();
+	void measure_auto_aim_performance(bool AIMING);
 
 	uint32_t auto_aim_frame_id = 0;
 	uint32_t nav_frame_id = 0;
 	uint32_t heart_beat_frame_id = 0;
 
 	// Read UART results
-	float yaw_vel = 0;	 // rad/s (+ccw, -cw)
-	float pitch_vel = 0; // rad/s
-	float pitch = 0;	 // rad (+up, -down)?
 	bool is_enemy_red = 0;
 	bool is_match_running = 0;
+	bool in_resupply_zone = 0;
+	bool in_center_zone = 0;
+	float pitch = 0;	 	// rad
+	float pitch_vel = 0; 	// rad/s
+	float yaw_vel = 0;	 	// rad/s
+	float orientation = 0;  // rad
+
 	bool valid_read = false;
 	std::string old_target_robot_color; 
 
@@ -63,8 +69,13 @@ private:
 	rclcpp::Subscription<vision_msgs::msg::PredictedArmor>::SharedPtr auto_aim_subscriber;
 	rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr nav_subscriber;
 	rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_publisher;
+
+	// Publishers for match data
 	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr target_robot_color_publisher;
 	rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr match_status_publisher;
+	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr rfid_publisher;	
+	rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr hp_publisher;
+
 	rclcpp::TimerBase::SharedPtr uart_read_timer;
 
 	std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;

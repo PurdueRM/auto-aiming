@@ -27,21 +27,23 @@ Clone this repository into your `ros2-ws` directory. We provide a `run` script t
 
 - **Building**
   - `./auto-aiming/run build`
-- **Launch ROS2 code**
+- **Run ROS2 code**
   - `./auto-aiming/run run <launch_file>`
-  - "launch files" basically run several ROS2 nodes at once. The main one is `video2detector.py`.
+    - "launch files" are how you start up the pipeline. For example you may use `video2detector.py` to run the auto-aiming pipeline with a video file, or `mv2control.py` to run using a real camera and send results to the STM32 control board.
 - **Run automated tests (GTest)**
   - `./auto-aiming/run test`
 - **Clean the workspace (remove build and install folders)**
   - `./auto-aiming/run clean`
 - _Optional flags_
   - `--quiet`: Suppresses console output, logs output to `command_output.log`.
-  - `--debug`: Builds with debug flags enabled. Used to display a detection results window and debug logs.
+  - `--debug`: Builds with debug flags enabled. When enabled, displays a detection results window and debug logs.
 
 ### Example to run the detector:
 ```
 ./auto-aiming/run --debug --quiet run video2detector.py
 ```
+
+### To run the navigation stack, please see the README in the `src/prm_autobot_2023` directory.
 
 ## Overall Suite Requirements
 ### Functional Requirements:

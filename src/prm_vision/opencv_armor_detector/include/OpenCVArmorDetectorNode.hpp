@@ -36,16 +36,21 @@ private:
     int _max_missed_frames;
     bool _reduce_search_area;
 
+    // Other variables
+    bool is_navigating = false;
+
     // Callbacks and publishers/subscribers
     void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr &image_msg);
     std::shared_ptr<rclcpp::Publisher<vision_msgs::msg::KeyPoints>> keypoints_publisher = NULL;
     rcl_interfaces::msg::SetParametersResult parameters_callback(const std::vector<rclcpp::Parameter> &parameters);
     rcl_interfaces::msg::SetParametersResult target_color_callback(const std_msgs::msg::String::SharedPtr color_msg);
     OnSetParametersCallbackHandle::SharedPtr params_callback_handle_;
+    void is_navigating_callback(const std_msgs::msg::String::SharedPtr msg);
 
     // Subscribers
     image_transport::Subscriber image_subscriber;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr target_color_subscriber;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr is_navigating_subscriber;
 };
 
 #endif // OPENCV_ARMOR_DETECTOR_NODE_HPP

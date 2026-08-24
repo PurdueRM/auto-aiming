@@ -74,5 +74,6 @@
         "numbers": "cpp",
         "semaphore": "cpp",
         "stop_token": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/purduerm/ros2-ws/auto-aiming/src/prm_autobot_2023"
 }

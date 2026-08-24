@@ -1,0 +1,8 @@
+image: Robomaster_Arena.pgm
+mode: trinary
+resolution: 0.012  # Resolution in meters per pixel
+#origin: [-3.541, -3.063, 0.0]  # translation of the map based on CAD
+origin: [-3.25, -3.30, 0.0]  # translation of the map (x, y) (based on experimental)
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

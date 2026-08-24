@@ -17,6 +17,7 @@ OpenCVArmorDetectorNode::OpenCVArmorDetectorNode(const rclcpp::NodeOptions &opti
   keypoints_publisher = this->create_publisher<vision_msgs::msg::KeyPoints>("key_points", 10);
   target_color_subscriber = this->create_subscription<std_msgs::msg::String>(
       "color_set", 1, std::bind(&OpenCVArmorDetectorNode::target_color_callback, this, std::placeholders::_1));
+  is_navigating_subscriber = this->create_subscription<std_msgs::msg::String>("nav_status", 10, std::bind(&OpenCVArmorDetectorNode::is_navigating_callback, this, std::placeholders::_1));
 
   // Initialize the detector
   DetectorConfig config = {_target_color, _hue_range_limit, _saturation_lower_limit, _value_lower_limit, _max_missed_frames, _reduce_search_area};
@@ -34,9 +35,32 @@ void OpenCVArmorDetectorNode::imageTransportInitilization()
                              std::placeholders::_1));
 }
 
+void OpenCVArmorDetectorNode::is_navigating_callback(const std_msgs::msg::String::SharedPtr msg)
+{
+    static std::string last_nav_str = "";
+    this->is_navigating = msg->data == "NAVIGATING";
+    if (last_nav_str != "NAVIGATING" && is_navigating)
+    { 
+        RCLCPP_INFO(this->get_logger(), "Navigating so halting auto-aim");
+    }
+    else if (last_nav_str == "NAVIGATING" && !is_navigating)
+    {
+        RCLCPP_INFO(this->get_logger(), "Nav ended, resuming auto-aim");
+    }
+
+    last_nav_str = msg->data.c_str();
+}
+
+
 rcl_interfaces::msg::SetParametersResult OpenCVArmorDetectorNode::target_color_callback(const std_msgs::msg::String::SharedPtr color_msg)
 {
-  RCLCPP_INFO(get_logger(), "Target color changed to: %s|", color_msg->data.c_str());
+  static TargetColor last_target_color;
+  if (detector->getConfig()._target_color != last_target_color)
+  
+  {
+    RCLCPP_INFO(get_logger(), "Target color changed to %s", color_msg->data.c_str());
+    last_target_color = detector->getConfig()._target_color;
+  }
   return parameters_callback({rclcpp::Parameter("_target_red", strcmp(color_msg->data.c_str(), "red") == 0)});
 }
 
@@ -67,8 +91,8 @@ rcl_interfaces::msg::SetParametersResult OpenCVArmorDetectorNode::parameters_cal
     else if (parameter.get_name() == "_target_red")
     {
       _target_color = parameter.as_bool() ? RED : BLUE;
-      RCLCPP_INFO(get_logger(), "New target color: %s",
-                  _target_color ? "red" : "blue");
+      // RCLCPP_INFO(get_logger(), "New target color: %s",
+      //             _target_color ? "red" : "blue");
     }
     else if (parameter.get_name() == "_max_missed_frames")
     {
@@ -97,6 +121,11 @@ rcl_interfaces::msg::SetParametersResult OpenCVArmorDetectorNode::parameters_cal
 void OpenCVArmorDetectorNode::imageCallback(
     const sensor_msgs::msg::Image::ConstSharedPtr &image_msg)
 {
+  if (is_navigating)
+  {
+      return;
+  }
+
   cv::Mat frame = cv_bridge::toCvShare(image_msg, "bgr8")->image;
   cv::resize(frame, frame, cv::Size(WIDTH, HEIGHT));
 

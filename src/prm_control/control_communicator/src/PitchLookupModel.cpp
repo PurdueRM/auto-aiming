@@ -101,20 +101,22 @@ void PitchLookupModel::write_file() {
  */
 float PitchLookupModel::get_offset(int distance, int height) {
     // Calculate the step size of the lookup table
-    int step_size = (this->upper_z - this->lower_z) /
+    int z_step_size = (this->upper_z - this->lower_z) /
                     (this->pitch_lookup_table.size() - 1);
+    int y_step_size = (this->upper_y - this->lower_y) /
+                    (this->pitch_lookup_table[0].size() - 1);
 
     // Calculate the indices of the tightest bound containing distance and height
-    int lower_step_z_idx = (distance - this->lower_z) / step_size;
-    int upper_step_z_idx = (distance - this->lower_z + step_size - 1) / step_size;
-    int lower_step_y_idx = (height - this->lower_y) / step_size;
-    int upper_step_y_idx = (height - this->lower_y + step_size - 1) / step_size;
+    int lower_step_z_idx = (distance - this->lower_z) / z_step_size;
+    int upper_step_z_idx = (distance - this->lower_z + z_step_size - 1) / z_step_size;
+    int lower_step_y_idx = (height - this->lower_y) / y_step_size;
+    int upper_step_y_idx = (height - this->lower_y + y_step_size - 1) / y_step_size;
 
     // Calculate the actual values of the tightest bounds
-    int lower_step_z = this->lower_z + step_size * lower_step_z_idx;
-    int upper_step_z = this->lower_z + step_size * upper_step_z_idx;
-    int lower_step_y = this->lower_y + step_size * lower_step_y_idx;
-    int upper_step_y = this->lower_y + step_size * upper_step_y_idx;
+    int lower_step_z = this->lower_z + z_step_size * lower_step_z_idx;
+    int upper_step_z = this->lower_z + z_step_size * upper_step_z_idx;
+    int lower_step_y = this->lower_y + y_step_size * lower_step_y_idx;
+    int upper_step_y = this->lower_y + y_step_size * upper_step_y_idx;
 
     if (lower_step_z_idx < 0 || lower_step_z_idx >= this->pitch_lookup_table.size() ||
         upper_step_z_idx < 0 || upper_step_z_idx >= this->pitch_lookup_table.size() ||

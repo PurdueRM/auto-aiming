@@ -26,7 +26,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	publish_static_tf(158.7f / 1000.f, 0.f / 1000.f, 47.5 / 1000.f, 0, 0, 0, "pitch_link", "camera_link");
 	publish_static_tf(0, 0, 478.f / 1000.f, 0, 0, 0, "base_link", "yaw_link");
 	publish_static_tf(0, 0, 0, 0, 0, 0, "base_footprint", "base_link");
-	publish_static_tf(0, 0, 0.3, 0, 0, 0, "base_link", "laser");
+	publish_static_tf(0.19, 0, 0.52, 0, 0, 0, "base_link", "laser"); 
 
 	this->heart_beat_timer = this->create_wall_timer(1000ms, std::bind(&ControlCommunicatorNode::heart_beat_handler, this));
 	this->auto_aim_subscriber = this->create_subscription<vision_msgs::msg::PredictedArmor>(
@@ -35,7 +35,9 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 		"cmd_vel", 1, std::bind(&ControlCommunicatorNode::nav_handler, this, _1));
 	this->odometry_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
 	this->target_robot_color_publisher = this->create_publisher<std_msgs::msg::String>("color_set", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
-	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
+	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)));
+	this->rfid_publisher = this->create_publisher<std_msgs::msg::String>("rfid", rclcpp::QoS(rclcpp::KeepLast(1)));
+	this->hp_publisher = this->create_publisher<std_msgs::msg::Int16>("health", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->uart_read_timer = this->create_wall_timer(4ms, std::bind(&ControlCommunicatorNode::read_uart, this));
 
 	RCLCPP_INFO(this->get_logger(), "Control Communicator Node Started.");
@@ -67,32 +69,26 @@ void ControlCommunicatorNode::publish_static_tf(float x, float y, float z, float
 }
 
 void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs::msg::PredictedArmor> msg)
-{	
+{
 	if (!control_communicator->is_connected || control_communicator->port_fd < 0)
 	{
 		RCLCPP_WARN(this->get_logger(), "UART Not connected, ignoring aim message.");
 		return;
 	}
 
-	float yaw, pitch;
-	control_communicator->compute_aim(aim_bullet_speed, msg->x, msg->y, msg->z, yaw, pitch);
-
-	PackageOut package;
-	package.frame_id = 0xAA;
-	package.frame_type = FRAME_TYPE_AUTO_AIM;
-	package.autoAimPackage.yaw = yaw;
-	package.autoAimPackage.pitch = pitch;
-	package.autoAimPackage.fire = 1;
-
-	int bytes_written = write(control_communicator->port_fd, &package, sizeof(PackageOut));
-	fsync(control_communicator->port_fd);
+	// Compute yaw/pitch and send over UART
+	float yaw;
+	float pitch;
+	bool impossible;
+	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, msg->fire, yaw, pitch, impossible);
+	bool AIMING = (msg->x != 0 || msg->y != 0 || msg->z != 0);
 
 	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
 	{
 		float dst = sqrt(pow(msg->x, 2) + pow(msg->y, 2) + pow(msg->z, 2));
-		RCLCPP_INFO(this->get_logger(), "Yaw: %.2f | Pitch: %.2f | dst: %.2f | (x, y, z): (%.2f, %.2f, %.2f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
+		RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Yaw: %.1f | Pitch: %.1f | dst: %.1f | (x,y,z): (%.1f, %.1f, %.1f)", yaw, pitch, dst, msg->x, msg->y, msg->z);
 	}
-	
+
 	if (bytes_written != sizeof(PackageOut))
 	{
 		RCLCPP_ERROR(this->get_logger(), "Failed to write complete package to UART. Bytes written: %d, Expected: %lu", bytes_written, sizeof(PackageOut));
@@ -100,6 +96,38 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 	}
 
 	auto_aim_frame_id++;
+
+	measure_auto_aim_performance(AIMING);
+}
+
+void ControlCommunicatorNode::measure_auto_aim_performance(bool AIMING)
+{
+	static rclcpp::Time last_time = this->now();
+	static int degraded_perf_count = 0;
+	rclcpp::Time curr_time = this->now();
+
+	rclcpp::Duration elapsed_time = curr_time - last_time;
+	last_time = curr_time;
+	float TARGET_FREQUENCY = 90.0;				// Hz
+	float TARGET_PERIOD = 1 / TARGET_FREQUENCY; // seconds
+
+	if (degraded_perf_count > 50 && AIMING)
+	{
+		RCLCPP_WARN(this->get_logger(), "DEGRADED PERFORMANCE DETECTED - AUTO-AIM SEND FREQUENCY: [%0.1f Hz]", 1 / elapsed_time.seconds());
+		degraded_perf_count = 0;
+	}
+	else if (this->auto_aim_frame_id % 1000 == 0)
+	{
+		RCLCPP_INFO(this->get_logger(), "Auto-Aim send frequency: [%0.1f Hz]", 1 / elapsed_time.seconds());
+	}
+	if (elapsed_time.seconds() > TARGET_PERIOD && AIMING)
+	{
+		degraded_perf_count++;
+	}
+	else
+	{
+		degraded_perf_count = 0;
+	}
 }
 
 void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::msg::Twist> msg)
@@ -109,6 +137,13 @@ void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::m
 		RCLCPP_WARN(this->get_logger(), "UART Not connected, ignoring nav message %d.", this->nav_frame_id++);
 		return;
 	}
+
+	static rclcpp::Time last_time = this->now();
+	rclcpp::Time curr_time = this->now();
+	rclcpp::Duration elapsed_time = curr_time - last_time;
+	last_time = curr_time;
+
+	float frequency = 1.0 / elapsed_time.seconds();
 
 	PackageOut package;
 
@@ -121,7 +156,7 @@ void ControlCommunicatorNode::nav_handler(const std::shared_ptr<geometry_msgs::m
 	write(control_communicator->port_fd, &package, sizeof(PackageOut));
 	fsync(control_communicator->port_fd);
 
-	RCLCPP_INFO(this->get_logger(), "x_vel = %f, y_vel = %f, yaw = %f", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad);
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "x_vel = %.1f, y_vel = %.1f, yaw = %.1f, frequency = %.1f Hz", package.navPackage.x_vel, package.navPackage.y_vel, package.navPackage.yaw_rad, frequency);
 }
 
 void ControlCommunicatorNode::heart_beat_handler()
@@ -158,41 +193,74 @@ void ControlCommunicatorNode::read_uart()
 {
 	PackageIn package;
 
-    if (!control_communicator->read_uart(control_communicator->port_fd, package, this->port))
-    {
-        RCLCPP_WARN(this->get_logger(), "UART read failed or misaligned.");
-        return;
-    }
+	if (!control_communicator->read_uart(control_communicator->port_fd, package, this->port))
+	{
+		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read failed or misaligned.");
+		return;
+	}
+	else {
+		
+		RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 500, "UART read succeeded!!!");
 
-    rclcpp::Time curr_time = this->now();
+	}
+
+	rclcpp::Time curr_time = this->now();
 
 	// Handle TF
-	this->pitch_vel = package.pitch_vel;			// rad/s
-	this->pitch = package.pitch;					// rad
-	this->yaw_vel = package.yaw_vel;				// rad/s
-	this->is_enemy_red = package.ref_flags & 2;			// second lowest bit denotes if we are red
-	this->is_match_running = package.ref_flags & 1; // LSB denotes if match is started
+	this->is_enemy_red = package.enemy_color_is_red;   // 1 for red and 0 for blue
+	this->is_match_running = package.game_status == 4; // 0 for not started, 1 for preperation stage, 2 for 15 seconds referee check, 3 for 5 seconds count down, 4 for match going, 5 for calculating match result
+	this->in_resupply_zone = package.rfid & 1;		   // bit 0 for resupply
+	this->in_center_zone = package.rfid & 2;		   // bit 1 for center zone
+	this->pitch = package.pitch;					   // rad
+	this->pitch_vel = package.pitch_vel;			   // rad/s
+	this->yaw_vel = package.yaw_vel;				   // rad/s
+	this->orientation = package.orientation;		   // rad
 	this->valid_read = true;
 
-	// publishing color and match status
-	std_msgs::msg::String target_robot_color; 
-	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
+	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+						 "READ UART: x = %.2f, y = %.2f, orientation = %.2f, x_vel = %.2f, y_vel = %.2f, pitch = %.2f, pitch_vel = %.2f, yaw_vel = %.2f, enemy_color_is_red = %d, game_status = %d, rfid = %d, HP = %d",
+						 package.x, package.y, package.orientation, package.x_vel, package.y_vel,
+						 package.pitch, package.pitch_vel, package.yaw_vel,
+						 package.enemy_color_is_red, package.game_status, package.rfid, package.HP);
 
-	if (old_target_robot_color != target_robot_color.data)
-	{
-		RCLCPP_INFO(this->get_logger(), "Target Robot Color: %s", target_robot_color.data.c_str());
-		target_robot_color_publisher->publish(target_robot_color);
-		old_target_robot_color = target_robot_color.data;	
-	}
+	///////////////////////////////
+	// Publishers for match data //
+	///////////////////////////////
 
-	if (this->auto_aim_frame_id % 5000 == 0 && this->auto_aim_frame_id != 0)
-	{
-		RCLCPP_INFO(this->get_logger(), "READ UART: x: %f | y: %f | x_vel: %f | y_vel: %f | yaw_vel: %f | pitch_vel: %f | pitch: %f | is_enemy_red: %d | is_match_running: %d", package.x, package.y, package.x_vel, package.y_vel, this->yaw_vel, this->pitch_vel, this->pitch, this->is_enemy_red, this->is_match_running);
-	}
-
+	// Match status
 	std_msgs::msg::Bool match_status;
 	match_status.data = this->is_match_running;
 	match_status_publisher->publish(match_status);
+
+	// Target robot color
+	std_msgs::msg::String target_robot_color;
+	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
+	target_robot_color_publisher->publish(target_robot_color);
+
+	// RFID
+	std_msgs::msg::String rfid_msg;
+	if (this->in_resupply_zone)
+	{
+		rfid_msg.data = "resupply";
+	}
+	else if (this->in_center_zone)
+	{
+		rfid_msg.data = "center";
+	}
+	else
+	{
+		rfid_msg.data = "none";
+	}
+	rfid_publisher->publish(rfid_msg);
+
+	// HP
+	std_msgs::msg::Int16 hp_msg;
+	hp_msg.data = package.HP;
+	hp_publisher->publish(hp_msg);
+
+	///////////////////////////////////
+	// End publishers for match data //
+	///////////////////////////////////
 
 	geometry_msgs::msg::TransformStamped pitch_tf;
 	pitch_tf.header.stamp = curr_time;
@@ -230,7 +298,7 @@ void ControlCommunicatorNode::read_uart()
 	odom.pose.pose.position.z = 0;
 
 	tf2::Quaternion odom_q;
-	odom_q.setRPY(0, 0, package.orientation);
+	odom_q.setRPY(0, 0, this->orientation);
 
 	odom_tf.transform.rotation.x = odom_q.x();
 	odom_tf.transform.rotation.y = odom_q.y();
@@ -266,6 +334,24 @@ void ControlCommunicatorNode::read_uart()
 	tf_broadcaster->sendTransform(odom_tf);
 
 	this->odometry_publisher->publish(odom);
+
+	// geometry_msgs::msg::TransformStamped gimbal_tf;
+
+	// gimbal_tf.header.stamp = curr_time;
+	// gimbal_tf.header.frame_id = "base_link";
+	// gimbal_tf.child_frame_id = "lidar_link";
+	// gimbal_tf.transform.translation.x = 0;
+	// gimbal_tf.transform.translation.y = 0;
+	// gimbal_tf.transform.translation.z = 0;
+
+	// tf2::Quaternion gimbal_q;
+	// gimbal_q.setRPY(0, 0, 0);
+	// gimbal_tf.transform.rotation.x = gimbal_q.x();
+	// gimbal_tf.transform.rotation.y = gimbal_q.y();
+	// gimbal_tf.transform.rotation.z = gimbal_q.z();
+	// gimbal_tf.transform.rotation.w = gimbal_q.w();
+
+	// tf_broadcaster->sendTransform(gimbal_tf);
 
 	return;
 }

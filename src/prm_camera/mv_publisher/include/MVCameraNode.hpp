@@ -8,6 +8,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <std_msgs/msg/string.hpp>
 
 // C++ system
 #include <memory>
@@ -54,6 +55,11 @@ private:
     std::thread capture_thread_;
 
     OnSetParametersCallbackHandle::SharedPtr params_callback_handle_;
+
+    // Custom: Stop camera if navigating
+    std::string nav_status_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr nav_status_sub_;
+
 };
 
 #endif // MV_CAMERA_NODE_HPP
