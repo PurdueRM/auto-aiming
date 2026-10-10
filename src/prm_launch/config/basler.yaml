@@ -1,0 +1,48 @@
+# Basler a2A2448-232g10c (ace 2, 10 GigE, color)
+# Wildcard node name so this applies regardless of the launch node_name.
+/**:
+  ros__parameters:
+    camera_frame: camera_frame
+
+    # Leave empty to grab the first camera found. Set the DeviceUserID
+    # (assign one with pylon Viewer) once more than one Basler is on the bus.
+    device_user_id: ""
+
+    # PoseEstimator currently hardcodes its intrinsics, so this is only used
+    # for the published camera_info topic. See notes below.
+    camera_info_url: ""
+
+    # Publish bgr8 directly: OpenCVArmorDetectorNode does
+    # cv_bridge::toCvShare(msg, "bgr8"), so anything else costs a conversion.
+    image_encoding: 'bgr8'
+
+    # 2448x2048 / 2 = 1224x1024, close to the detector's 1280x1024 resize
+    # target and ~4x less bandwidth than full res.
+    binning_x: 2
+    binning_y: 2
+
+    frame_rate: 100.0
+
+    # Global shutter sensor (IMX546).
+    shutter_mode: "global"
+
+    # Microseconds. Armor detection wants a short exposure so the LED strips
+    # stay saturated while everything else goes dark. Tune against mv's 3000.
+    exposure: 3000.0
+
+    # Fraction (0..1) of the camera's max gain.
+    gain: 0.3
+    gamma: 1.0
+
+    # Do not let the driver hunt for a target brightness; exposure/gain above
+    # are meant to be fixed.
+    enable_status_publisher: true
+    enable_current_params_publisher: false
+
+    gige:
+      mtu_size: 9000
+      inter_pkg_delay: 0
+
+    # Must exceed the inter-frame period (1/frame_rate) with margin.
+    grab_timeout: 500
+    startup_user_set: "Default"

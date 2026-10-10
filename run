@@ -1,6 +1,8 @@
 #!/bin/bash
 LOG_FILE="command_output.log"
 
+export PYLON_ROOT="$(pwd)/src/prm_camera/pylon_sdk/pylon"
+
 # Function to print messages in green
 print_green() {
     echo -e "\e[0m\e[32m$1\e[0m"
@@ -112,8 +114,12 @@ build() {
     fi
 
     if [[ "$quiet" == "true" ]]; then
+        colcon build --packages-up-to pylon_ros2_camera_wrapper prm_launch --cmake-args $build_args >> "$LOG_FILE" 2>&1
+
         colcon build --symlink-install --cmake-args $build_args --allow-overriding opencv_armor_detector >> "$LOG_FILE" 2>&1
     else
+        colcon build --packages-up-to pylon_ros2_camera_wrapper prm_launch --cmake-args $build_args
+
         colcon build --symlink-install --cmake-args $build_args --allow-overriding opencv_armor_detector
     fi
 
