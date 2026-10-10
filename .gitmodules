@@ -1,0 +1,4 @@
+[submodule "src/prm_camera/pylon_ros2_camera"]
+	path = src/prm_camera/pylon_ros2_camera
+	url = https://github.com/basler/pylon-ros-camera
+	branch = humble
