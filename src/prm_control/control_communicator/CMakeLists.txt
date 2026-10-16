@@ -25,6 +25,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -34,7 +35,10 @@ include_directories(include)
 
 add_executable(ControlCommunicatorNode 
 	src/ControlCommunicatorNode.cpp
+	src/AimPredictor.cpp
 )
+
+target_include_directories(ControlCommunicatorNode PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 add_library(ControlCommunicator STATIC 
   src/ControlCommunicator.cpp
@@ -56,7 +60,7 @@ find_package(ament_cmake_gtest REQUIRED)
 ament_add_gtest(test_ControlCommunicator test/test_ControlCommunicator.cpp)
 target_include_directories(test_ControlCommunicator PRIVATE include)
 target_link_libraries(test_ControlCommunicator ControlCommunicator)
-target_link_libraries(ControlCommunicatorNode Eigen3::Eigen ControlCommunicator)
+target_link_libraries(ControlCommunicatorNode Eigen3::Eigen ControlCommunicator ${OpenCV_LIBS})
 ament_target_dependencies(test_ControlCommunicator rclcpp std_msgs geometry_msgs vision_msgs tf2_ros tf2 nav_msgs)
 
 install(TARGETS

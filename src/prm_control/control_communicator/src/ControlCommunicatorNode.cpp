@@ -9,6 +9,28 @@
 using namespace std::chrono_literals;
 using namespace std::placeholders;
 
+cv::Mat eulerToRvec(double roll, double pitch, double yaw)
+{
+    // Assuming roll, pitch, yaw are in radians.
+    double cr = std::cos(roll);
+    double sr = std::sin(roll);
+    double cp = std::cos(pitch);
+    double sp = std::sin(pitch);
+    double cy = std::cos(yaw);
+    double sy = std::sin(yaw);
+
+    // Rotation matrix: R = Rz(yaw) * Ry(pitch) * Rx(roll)
+    cv::Mat R = (cv::Mat_<double>(3, 3) <<
+        cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr,
+        sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr,
+        -sp,     cp * sr,                cp * cr
+    );
+
+    cv::Mat rvec;
+    cv::Rodrigues(R, rvec);
+    return rvec;
+}
+
 ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("control_communicator_node")
 {
 	aim_stop_null_frame_count = this->declare_parameter("aim.stop_null_frame_count", 3);
@@ -76,12 +98,50 @@ void ControlCommunicatorNode::auto_aim_handler(const std::shared_ptr<vision_msgs
 		return;
 	}
 
+	bool has_target = (msg->x != 0 || msg->y != 0 || msg->z != 0);
+
+	auto output = vision_msgs::msg::PredictedArmor();
+	output.x = msg->x;
+	output.y = msg->y;
+	output.z = msg->z;
+
+	if (has_target)
+	{
+		coordinate_t armor;
+
+		armor.tvec = (cv::Mat_<double>(3, 1) << msg->x, msg->y, msg->z);
+		armor.rvec = eulerToRvec(msg->roll, msg->pitch, msg->yaw);
+
+		coordinate_t gimbal_position;
+		gimbal_position.tvec = (cv::Mat_<double>(3, 1) << -this->chassis_y * 1000.0, 0.0, this->chassis_x * 1000.0);
+
+		// Negates orientation since the assumed vertical axises for this and embedded control are antiparallel
+		gimbal_position.rvec = eulerToRvec(1.0 * this->pitch, -1.0 * this->orientation, 0.0);
+
+		coordinate_t gimbal_velocity;
+		gimbal_velocity.tvec = cv::Mat::zeros(3, 1, CV_64F);
+		gimbal_velocity.rvec = (cv::Mat_<double>(3, 1) << 0.0, this->pitch_vel, this->yaw_vel);
+
+		// Update the detector with the current gimbal state before predicting the aim
+		detector.setGimbalState(gimbal_position, gimbal_velocity);
+
+		coordinate_t predicted_aim = detector.predictAim(armor);
+
+		output.x = predicted_aim.tvec.at<double>(0, 0);
+		output.y = predicted_aim.tvec.at<double>(1, 0);
+		output.z = predicted_aim.tvec.at<double>(2, 0);
+	}
+	else
+	{
+		detector.reset();
+	}
+
 	// Compute yaw/pitch and send over UART
 	float yaw;
 	float pitch;
 	bool impossible;
-	int bytes_written = control_communicator->aim(aim_bullet_speed, msg->x, msg->y, msg->z, msg->fire, yaw, pitch, impossible);
-	bool AIMING = (msg->x != 0 || msg->y != 0 || msg->z != 0);
+	int bytes_written = control_communicator->aim(aim_bullet_speed, output.x, output.y, output.z, msg->fire, yaw, pitch, impossible);
+	bool AIMING = has_target;
 
 	if (this->auto_aim_frame_id % 100 == 0 && this->auto_aim_frame_id != 0)
 	{
@@ -215,6 +275,10 @@ void ControlCommunicatorNode::read_uart()
 	this->pitch_vel = package.pitch_vel;			   // rad/s
 	this->yaw_vel = package.yaw_vel;				   // rad/s
 	this->orientation = package.orientation;		   // rad
+	this->chassis_x = package.x;					   // m (global frame)
+	this->chassis_y = package.y;					   // m (global frame)
+	this->chassis_x_vel = package.x_vel;			   // m/s (gimbal frame)
+	this->chassis_y_vel = package.y_vel;			   // m/s (gimbal frame)
 	this->valid_read = true;
 
 	RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,

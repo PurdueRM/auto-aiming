@@ -24,6 +24,7 @@
 #include <chrono>
 
 #include "ControlCommunicator.h"
+#include "AimPredictor.h"
 
 class ControlCommunicatorNode : public rclcpp::Node
 {
@@ -32,6 +33,7 @@ public:
 	~ControlCommunicatorNode();
 
 	ControlCommunicator *control_communicator = new ControlCommunicator();
+	AimPredictor detector;
 
 	void auto_aim_handler(const std::shared_ptr<vision_msgs::msg::PredictedArmor> msg);
 	void nav_handler(const std::shared_ptr<geometry_msgs::msg::Twist> msg);
@@ -55,6 +57,12 @@ private:
 	float pitch_vel = 0; 	// rad/s
 	float yaw_vel = 0;	 	// rad/s
 	float orientation = 0;  // rad
+
+	// Chassis odometry from PackageIn
+	float chassis_x = 0;     // m   (global frame)
+	float chassis_y = 0;     // m   (global frame)
+	float chassis_x_vel = 0; // m/s (gimbal frame, per PackageIn)
+	float chassis_y_vel = 0; // m/s (gimbal frame, per PackageIn)
 
 	bool valid_read = false;
 	std::string old_target_robot_color; 
