@@ -131,17 +131,19 @@ class PoseSchedulerStateMachine(Node):
 
         # CHANGE BASED ON MAP
         self.named_poses = {
-            "RED_HOME": self._make_pose([-5.7,-2.99]),
-            "BLUE_HOME": self._make_pose([1.87, -1.4]),
-            "CENTER_ZONE": self._make_pose([-1.81, -2.08])
+            "RED_HOME": self._make_pose([-5.7,-2.99, -2.85]),
+            "BLUE_HOME": self._make_pose([1.87, -1.4, 2.88]),
+            "CENTER_ZONE": self._make_pose([-1.81, -2.08, 2.88])
         }
+
+        #2.88
         
         self.home_pose_name = "BLUE_HOME"
 
         # Subscribers
         self.create_subscription(Bool, 'match_start', self._match_cb, 10)
         self.create_subscription(Int16, 'health', self._health_cb, 10)
-        self.create_subscription(String, 'target_robot_color', self._enemy_color_cb, 10)
+        self.create_subscription(String, 'enemy_color', self._enemy_color_cb, 10)
 
         # Timer
         self.create_timer(0.5, self._tick)
@@ -152,7 +154,7 @@ class PoseSchedulerStateMachine(Node):
         pose.pose.position.x = lst[0]
         pose.pose.position.y = lst[1]
         if len(lst) >= 3:
-            yaw = lst[2] * math.pi / 180  # Convert degrees to radians
+            yaw = lst[2] # * math.pi / 180  # Convert degrees to radians
             pose.pose.orientation.z = math.sin(yaw / 2)
             pose.pose.orientation.w = math.cos(yaw / 2)
         else:
@@ -163,20 +165,6 @@ class PoseSchedulerStateMachine(Node):
         if msg.data and not self.match_started:
             self.get_logger().info("Match started")
             self.match_started = True
-            # self.start_time = time.time()
-
-            # # a little bit of messing around
-            # # Republish initial pose at x:0.0, y:0.0, z:0.0, yaw:1.6
-            # initial_pose = PoseWithCovarianceStamped()
-            # initial_pose.header.frame_id = 'map'
-            # initial_pose.pose.pose.position.x = 6.0
-            # initial_pose.pose.pose.position.y = 7.2
-            # initial_pose.pose.pose.position.z = 0.0
-            # # Convert yaw to quaternion
-            # yaw = -0.5
-            # initial_pose.pose.pose.orientation.z = math.sin(yaw / 2)
-            # initial_pose.pose.pose.orientation.w = math.cos(yaw / 2)
-            # self.navigator.set_initial_pose(initial_pose)
 
     @property
     def low_health(self):
@@ -188,14 +176,9 @@ class PoseSchedulerStateMachine(Node):
     
     def _health_cb(self, msg):
         self.health = msg.data
-        # self.low_health = self.new_health < self.LOW_HEALTH_THRESHOLD
 
     def _enemy_color_cb(self, msg):
-        self.enemy_is_red = (msg.data == 1)
-        # if self.enemy_is_red:
-        #    self.home_pose_name = "BLUE_HOME"
-        # else:
-        #    self.home_pose_name = "RED_HOME"
+        self.enemy_is_red = (msg.data == "red")
 
     def wait_for_enemy_color(self):
         while self.enemy_is_red is None and rclpy.ok():

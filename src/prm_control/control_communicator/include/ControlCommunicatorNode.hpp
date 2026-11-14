@@ -71,7 +71,7 @@ private:
 	rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_publisher;
 
 	// Publishers for match data
-	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr target_robot_color_publisher;
+	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr enemy_color_publisher;
 	rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr match_status_publisher;
 	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr rfid_publisher;	
 	rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr hp_publisher;

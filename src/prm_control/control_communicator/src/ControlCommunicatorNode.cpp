@@ -34,7 +34,7 @@ ControlCommunicatorNode::ControlCommunicatorNode(const char *port) : Node("contr
 	this->nav_subscriber = this->create_subscription<geometry_msgs::msg::Twist>(
 		"cmd_vel", 1, std::bind(&ControlCommunicatorNode::nav_handler, this, _1));
 	this->odometry_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
-	this->target_robot_color_publisher = this->create_publisher<std_msgs::msg::String>("color_set", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
+	this->enemy_color_publisher = this->create_publisher<std_msgs::msg::String>("enemy_color", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
 	this->match_status_publisher = this->create_publisher<std_msgs::msg::Bool>("match_start", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->rfid_publisher = this->create_publisher<std_msgs::msg::String>("rfid", rclcpp::QoS(rclcpp::KeepLast(1)));
 	this->hp_publisher = this->create_publisher<std_msgs::msg::Int16>("health", rclcpp::QoS(rclcpp::KeepLast(1)));
@@ -232,10 +232,10 @@ void ControlCommunicatorNode::read_uart()
 	match_status.data = this->is_match_running;
 	match_status_publisher->publish(match_status);
 
-	// Target robot color
-	std_msgs::msg::String target_robot_color;
-	target_robot_color.data = this->is_enemy_red ? "red" : "blue";
-	target_robot_color_publisher->publish(target_robot_color);
+	// Enemy color
+	std_msgs::msg::String enemy_color;
+	enemy_color.data = this->is_enemy_red ? "red" : "blue";
+	enemy_color_publisher->publish(enemy_color);
 
 	// RFID
 	std_msgs::msg::String rfid_msg;
