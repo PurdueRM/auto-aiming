@@ -24,6 +24,7 @@ class AimPredictor {
     private:
         double projectile_speed = 25.0; // m/s
         double acceleration_variance = 1000000.0; // 1000 mm/s^2 sd
+        double time_offset = 0.3; // s
         std::chrono::time_point<std::chrono::steady_clock> last_prediction_time;
         coordinate_t gimbal_position;
         coordinate_t gimbal_velocity;

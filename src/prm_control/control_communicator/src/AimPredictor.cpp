@@ -145,16 +145,18 @@ coordinate_t AimPredictor::toLocalCoordinate(coordinate_t coordinate) {
 /**
  * @brief Calculates the interception point where a projectile should meet a moving armor
  * 
- * Assumes constant velocity motion for both the armor and the projectile. Currently does
- * not account for gimbal velocity
+ * Assumes constant velocity motion for both the armor and the projectile, and advances
+ * the relative position by the feed delay before calculating the projectile's flight time.
  * 
  * @param armor_position The current position of the armor in 3D space
  * @param armor_velocity The current velocity of the armor in 3D space
  * @return The calculated interception point in 3D space
  */
 coordinate_t AimPredictor::interceptionPoint(coordinate_t armor_position, coordinate_t armor_velocity) {
-    double x = armor_position.tvec.at<double>(0);
-    double z = armor_position.tvec.at<double>(2);
+    coordinate_t launch_position = armor_position;
+    launch_position.tvec = armor_position.tvec + armor_velocity.tvec * this->time_offset;
+    double x = launch_position.tvec.at<double>(0);
+    double z = launch_position.tvec.at<double>(2);
     double vx = armor_velocity.tvec.at<double>(0);
     double vz = armor_velocity.tvec.at<double>(2);
     double projectile_speed_mm_s = this->projectile_speed * 1000;
@@ -165,9 +167,9 @@ coordinate_t AimPredictor::interceptionPoint(coordinate_t armor_position, coordi
 
     double discriminant = b * b - 4 * a * c;
     if (discriminant < 0) {
-        // No real solution, return the current armor position as the interception point
+        // No real solution, return the predicted armor position at launch
         // I hope no robot moves faster than the projectile speed ^_^
-        return armor_position;
+        return launch_position;
     }
     
     double t_one = (-b + std::sqrt(discriminant)) / (2 * a);
@@ -181,7 +183,7 @@ coordinate_t AimPredictor::interceptionPoint(coordinate_t armor_position, coordi
     }
 
     coordinate_t interception_point;
-    interception_point.tvec = armor_position.tvec + armor_velocity.tvec * t;
+    interception_point.tvec = launch_position.tvec + armor_velocity.tvec * t;
     interception_point.rvec = cv::Mat::zeros(3, 1, CV_64F);
     return interception_point;
 }
